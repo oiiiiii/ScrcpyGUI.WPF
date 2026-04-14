@@ -15,6 +15,7 @@ public class MainViewModel : ViewModelBase
     private string _logText = string.Empty;
     private bool _isScrcpyRunning;
     private bool _isToolsConfigured;
+    private bool _isSettingsPanelVisible;
     private FloatingWindow? _floatingWindow;
     private InputFloatingWindow? _inputFloatingWindow;
     private InputMethodMonitor? _inputMonitor;
@@ -86,7 +87,11 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    public event EventHandler? RequestOpenSettings;
+    public bool IsSettingsPanelVisible
+    {
+        get => _isSettingsPanelVisible;
+        set => SetProperty(ref _isSettingsPanelVisible, value);
+    }
 
     public ICommand RefreshDevicesCommand { get; }
     public ICommand StartScrcpyCommand { get; }
@@ -94,7 +99,11 @@ public class MainViewModel : ViewModelBase
     public ICommand TakeScreenshotCommand { get; }
     public ICommand SendKeyCommand { get; }
     public ICommand ClearLogCommand { get; }
-    public ICommand OpenSettingsCommand { get; }
+    public ICommand ToggleSettingsCommand { get; }
+    public ICommand BrowseScrcpyCommand { get; }
+    public ICommand BrowseAdbCommand { get; }
+    public ICommand BrowseScreenshotPathCommand { get; }
+    public ICommand SaveConfigCommand { get; }
 
     public MainViewModel()
     {
@@ -106,7 +115,11 @@ public class MainViewModel : ViewModelBase
         TakeScreenshotCommand = new RelayCommand(_ => TakeScreenshot(), _ => SelectedDevice != null && IsToolsConfigured);
         SendKeyCommand = new RelayCommand(param => SendKey(param), _ => SelectedDevice != null && IsToolsConfigured);
         ClearLogCommand = new RelayCommand(_ => ClearLog());
-        OpenSettingsCommand = new RelayCommand(_ => OpenSettings());
+        ToggleSettingsCommand = new RelayCommand(_ => ToggleSettings());
+        BrowseScrcpyCommand = new RelayCommand(_ => BrowseScrcpy());
+        BrowseAdbCommand = new RelayCommand(_ => BrowseAdb());
+        BrowseScreenshotPathCommand = new RelayCommand(_ => BrowseScreenshotPath());
+        SaveConfigCommand = new RelayCommand(_ => SaveConfig());
 
         LogHelper.LogMessage += OnLogMessage;
         ScrcpyHelper.ScrcpyStarted += OnScrcpyStarted;
@@ -115,6 +128,11 @@ public class MainViewModel : ViewModelBase
         InitializeTools();
         
         ConfigHelper.SaveConfig(_config);
+
+        if (!IsToolsConfigured)
+        {
+            IsSettingsPanelVisible = true;
+        }
 
         if (IsToolsConfigured)
         {
@@ -172,9 +190,17 @@ public class MainViewModel : ViewModelBase
         return SelectedDevice != null && !IsScrcpyRunning && IsToolsConfigured;
     }
 
-    private void OpenSettings()
+    private void ToggleSettings()
     {
-        RequestOpenSettings?.Invoke(this, EventArgs.Empty);
+        IsSettingsPanelVisible = !IsSettingsPanelVisible;
+        if (IsSettingsPanelVisible)
+        {
+            LogHelper.Info("显示设置面板");
+        }
+        else
+        {
+            LogHelper.Info("隐藏设置面板");
+        }
     }
 
     private bool CanStopScrcpy()
@@ -280,14 +306,18 @@ public class MainViewModel : ViewModelBase
         {
             LogHelper.Info("初始化智能输入功能...");
 
-            _inputMonitor = new InputMethodMonitor(SelectedDevice.SerialNumber);
+            _inputMonitor = new InputMethodMonitor(
+                SelectedDevice.SerialNumber,
+                Config.KeyboardPollingInterval,
+                Config.KeyboardShowDebounce,
+                Config.KeyboardHideDebounce);
             _inputMonitor.KeyboardVisibilityChanged += OnKeyboardVisibilityChanged;
             _inputMonitor.ForegroundPackageChanged += OnForegroundPackageChanged;
 
             _textSender = new ScrcpyTextSender(SelectedDevice.SerialNumber);
             
-            LogHelper.Info("等待 scrcpy 完全启动 (2秒)...");
-            await System.Threading.Tasks.Task.Delay(2000);
+            LogHelper.Info($"等待 scrcpy 完全启动 ({Config.ScrcpyStartupDelay}ms)...");
+            await System.Threading.Tasks.Task.Delay(Config.ScrcpyStartupDelay);
             
             try
             {
@@ -304,7 +334,7 @@ public class MainViewModel : ViewModelBase
 
             _positionUpdateTimer = new System.Windows.Threading.DispatcherTimer
             {
-                Interval = TimeSpan.FromMilliseconds(500)
+                Interval = TimeSpan.FromMilliseconds(Config.PositionUpdateInterval)
             };
             _positionUpdateTimer.Tick += OnPositionUpdateTimerTick;
             _positionUpdateTimer.Start();
@@ -584,5 +614,67 @@ public class MainViewModel : ViewModelBase
         {
             _floatingWindow.ShowNotification("文本发送成功！");
         }
+    }
+
+    private void BrowseScrcpy()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "可执行文件 (*.exe)|*.exe|所有文件 (*.*)|*.*",
+            Title = "选择 scrcpy.exe 文件",
+            FileName = "scrcpy.exe"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            Config.ScrcpyPath = dialog.FileName;
+            OnPropertyChanged(nameof(Config));
+            LogHelper.Info($"Scrcpy 路径已更新: {Config.ScrcpyPath}");
+        }
+    }
+
+    private void BrowseAdb()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "可执行文件 (*.exe)|*.exe|所有文件 (*.*)|*.*",
+            Title = "选择 adb.exe 文件",
+            FileName = "adb.exe"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            Config.AdbPath = dialog.FileName;
+            OnPropertyChanged(nameof(Config));
+            LogHelper.Info($"ADB 路径已更新: {Config.AdbPath}");
+        }
+    }
+
+    private void BrowseScreenshotPath()
+    {
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "选择截图保存目录",
+            ShowNewFolderButton = true,
+            SelectedPath = Config.ScreenshotSavePath
+        };
+
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        {
+            Config.ScreenshotSavePath = dialog.SelectedPath;
+            OnPropertyChanged(nameof(Config));
+        }
+    }
+
+    private void SaveConfig()
+    {
+        ConfigHelper.SaveConfig(Config);
+        
+        AdbHelper.UpdatePaths(Config.AdbPath);
+        ScrcpyHelper.UpdatePaths(Config.ScrcpyPath);
+        
+        InitializeTools();
+        
+        LogHelper.Info("配置已保存");
     }
 }

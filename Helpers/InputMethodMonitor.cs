@@ -12,6 +12,8 @@ public class InputMethodMonitor : IDisposable
     private string _currentForegroundPackage = string.Empty;
     private readonly Stopwatch _showDebounce = new();
     private readonly Stopwatch _hideDebounce = new();
+    private readonly int _showDebounceMs;
+    private readonly int _hideDebounceMs;
     private bool _disposed;
 
     public event EventHandler<bool>? KeyboardVisibilityChanged;
@@ -20,12 +22,14 @@ public class InputMethodMonitor : IDisposable
     public bool IsKeyboardVisible => _isKeyboardVisible;
     public string CurrentForegroundPackage => _currentForegroundPackage;
 
-    public InputMethodMonitor(string serialNumber)
+    public InputMethodMonitor(string serialNumber, int pollingIntervalMs = 350, int showDebounceMs = 200, int hideDebounceMs = 300)
     {
         _serialNumber = serialNumber;
+        _showDebounceMs = showDebounceMs;
+        _hideDebounceMs = hideDebounceMs;
         _timer = new System.Windows.Threading.DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(350)
+            Interval = TimeSpan.FromMilliseconds(pollingIntervalMs)
         };
         _timer.Tick += OnTimerTick;
     }
@@ -68,7 +72,7 @@ public class InputMethodMonitor : IDisposable
             {
                 _showDebounce.Restart();
             }
-            else if (_showDebounce.ElapsedMilliseconds >= 200 && !_isKeyboardVisible)
+            else if (_showDebounce.ElapsedMilliseconds >= _showDebounceMs && !_isKeyboardVisible)
             {
                 _isKeyboardVisible = true;
                 _hideDebounce.Reset();
@@ -83,7 +87,7 @@ public class InputMethodMonitor : IDisposable
             {
                 _hideDebounce.Restart();
             }
-            else if (_hideDebounce.ElapsedMilliseconds >= 300 && _isKeyboardVisible)
+            else if (_hideDebounce.ElapsedMilliseconds >= _hideDebounceMs && _isKeyboardVisible)
             {
                 _isKeyboardVisible = false;
                 _showDebounce.Reset();

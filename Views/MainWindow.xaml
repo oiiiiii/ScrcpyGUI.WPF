@@ -4,12 +4,19 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:ScrcpyGUI.WPF.ViewModels"
+        xmlns:local="clr-namespace:ScrcpyGUI.WPF.Views"
+        xmlns:converters="clr-namespace:ScrcpyGUI.WPF.Converters"
         mc:Ignorable="d"
-        Title="Scrcpy GUI" Height="600" Width="900"
+        Title="Scrcpy GUI" Height="700" Width="900"
         MinHeight="500" MinWidth="800">
     <Window.DataContext>
         <viewModels:MainViewModel />
     </Window.DataContext>
+    
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+    </Window.Resources>
     
     <Grid>
         <Grid.RowDefinitions>
@@ -19,116 +26,230 @@
         </Grid.RowDefinitions>
 
         <ToolBar Grid.Row="0" Height="40">
-            <Button Content="🔄 刷新设备" Command="{Binding RefreshDevicesCommand}" Margin="5,0" Padding="10,5" />
+            <Button Content="🏠 主界面" Command="{Binding ToggleSettingsCommand}" Margin="5,0" Padding="10,5" 
+                    Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource BoolToVisibility}}" />
+            <Button Content="🔄 刷新设备" Command="{Binding RefreshDevicesCommand}" Margin="5,0" Padding="10,5" 
+                    Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
             <Separator />
-            <Button Content="⚙️ 设置" Command="{Binding OpenSettingsCommand}" Margin="5,0" Padding="10,5" />
-            <Button Content="❓ 帮助" Margin="5,0" Padding="10,5" />
+            <Button Content="⚙️ 设置" Command="{Binding ToggleSettingsCommand}" Margin="5,0" Padding="10,5" 
+                    Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
+            <Button Content="❓ 帮助" Margin="5,0" Padding="10,5" 
+                    Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
         </ToolBar>
 
         <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200" MinWidth="150" />
-                <ColumnDefinition Width="*" MinWidth="200" />
-                <ColumnDefinition Width="200" MinWidth="150" />
-            </Grid.ColumnDefinitions>
+            <Grid Name="MainPanel" 
+                  Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200" MinWidth="150" />
+                    <ColumnDefinition Width="*" MinWidth="200" />
+                    <ColumnDefinition Width="200" MinWidth="150" />
+                </Grid.ColumnDefinitions>
 
-            <GroupBox Header="设备列表" Grid.Column="0" Margin="5">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <ListBox ItemsSource="{Binding Devices}" 
-                             SelectedItem="{Binding SelectedDevice}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" />
-                                    <TextBlock Text="{Binding SerialNumber}" FontSize="10" Foreground="Gray" />
-                                    <TextBlock>
-                                        <Run Text="{Binding ConnectionType}" />
-                                        <Run Text=" - " />
-                                        <Run Text="{Binding Status}" />
-                                    </TextBlock>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Grid>
-            </GroupBox>
+                <GroupBox Header="设备列表" Grid.Column="0" Margin="5">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <ListBox ItemsSource="{Binding Devices}" 
+                                 SelectedItem="{Binding SelectedDevice}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" />
+                                        <TextBlock Text="{Binding SerialNumber}" FontSize="10" Foreground="Gray" />
+                                        <TextBlock>
+                                            <Run Text="{Binding ConnectionType}" />
+                                            <Run Text=" - " />
+                                            <Run Text="{Binding Status}" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </GroupBox>
 
-            <GroupBox Header="控制面板" Grid.Column="1" Margin="5">
-                <StackPanel VerticalAlignment="Center" Margin="20">
-                    <Button Content="▶️ 启动投屏" 
-                            Command="{Binding StartScrcpyCommand}"
-                            Height="50" FontSize="16" Margin="0,10"
-                            IsEnabled="{Binding StartScrcpyCommand.CanExecute, RelativeSource={RelativeSource Self}}" />
-                    <Button Content="⏹️ 停止投屏" 
-                            Command="{Binding StopScrcpyCommand}"
-                            Height="50" FontSize="16" Margin="0,10"
-                            IsEnabled="{Binding StopScrcpyCommand.CanExecute, RelativeSource={RelativeSource Self}}" />
-                    
-                    <Separator Margin="0,20" />
-                    
-                    <TextBlock Text="快捷操作" FontWeight="Bold" Margin="0,10" />
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
-                            <Button Content="📷 截图" Command="{Binding TakeScreenshotCommand}" Margin="5" Padding="10,5" />
-                            <Button Content="🔘 电源" Command="{Binding SendKeyCommand}" CommandParameter="26" Margin="5" Padding="10,5" />
-                            <Button Content="🏠 首页" Command="{Binding SendKeyCommand}" CommandParameter="3" Margin="5" Padding="10,5" />
-                            <Button Content="↩️ 返回" Command="{Binding SendKeyCommand}" CommandParameter="4" Margin="5" Padding="10,5" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
-                            <Button Content="🔊 音量+" Command="{Binding SendKeyCommand}" CommandParameter="24" Margin="5" Padding="10,5" />
-                            <Button Content="🔇 音量-" Command="{Binding SendKeyCommand}" CommandParameter="25" Margin="5" Padding="10,5" />
-                            <Button Content="📋 菜单" Command="{Binding SendKeyCommand}" CommandParameter="82" Margin="5" Padding="10,5" />
-                            <Button Content="📱 多任务" Command="{Binding SendKeyCommand}" CommandParameter="187" Margin="5" Padding="10,5" />
+                <GroupBox Header="控制面板" Grid.Column="1" Margin="5">
+                    <StackPanel VerticalAlignment="Center" Margin="20">
+                        <Button Content="▶️ 启动投屏" 
+                                Command="{Binding StartScrcpyCommand}"
+                                Height="50" FontSize="16" Margin="0,10"
+                                IsEnabled="{Binding StartScrcpyCommand.CanExecute, RelativeSource={RelativeSource Self}}" />
+                        <Button Content="⏹️ 停止投屏" 
+                                Command="{Binding StopScrcpyCommand}"
+                                Height="50" FontSize="16" Margin="0,10"
+                                IsEnabled="{Binding StopScrcpyCommand.CanExecute, RelativeSource={RelativeSource Self}}" />
+                        
+                        <Separator Margin="0,20" />
+                        
+                        <TextBlock Text="快捷操作" FontWeight="Bold" Margin="0,10" />
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
+                                <Button Content="📷 截图" Command="{Binding TakeScreenshotCommand}" Margin="5" Padding="10,5" />
+                                <Button Content="🔘 电源" Command="{Binding SendKeyCommand}" CommandParameter="26" Margin="5" Padding="10,5" />
+                                <Button Content="🏠 首页" Command="{Binding SendKeyCommand}" CommandParameter="3" Margin="5" Padding="10,5" />
+                                <Button Content="↩️ 返回" Command="{Binding SendKeyCommand}" CommandParameter="4" Margin="5" Padding="10,5" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
+                                <Button Content="🔊 音量+" Command="{Binding SendKeyCommand}" CommandParameter="24" Margin="5" Padding="10,5" />
+                                <Button Content="🔇 音量-" Command="{Binding SendKeyCommand}" CommandParameter="25" Margin="5" Padding="10,5" />
+                                <Button Content="📋 菜单" Command="{Binding SendKeyCommand}" CommandParameter="82" Margin="5" Padding="10,5" />
+                                <Button Content="📱 多任务" Command="{Binding SendKeyCommand}" CommandParameter="187" Margin="5" Padding="10,5" />
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </GroupBox>
+                </GroupBox>
 
-            <GroupBox Header="参数配置" Grid.Column="2" Margin="5">
+                <GroupBox Header="参数配置" Grid.Column="2" Margin="5">
+                    <ScrollViewer>
+                        <StackPanel Margin="10">
+                            <TextBlock Text="分辨率 (0=不限制)" Margin="0,5" />
+                            <ComboBox SelectedValue="{Binding Config.MaxSize}" 
+                                      SelectedValuePath="Tag"
+                                      Margin="0,0,0,10">
+                                <ComboBoxItem Content="0=不限制" Tag="0" />
+                                <ComboBoxItem Content="1920" Tag="1920" />
+                                <ComboBoxItem Content="1080" Tag="1080" />
+                                <ComboBoxItem Content="720" Tag="720" />
+                                <ComboBoxItem Content="540" Tag="540" />
+                            </ComboBox>
+
+                            <TextBlock Text="码率 (Mbps)" Margin="0,5" />
+                            <ComboBox SelectedValue="{Binding Config.BitRate}" 
+                                      SelectedValuePath="Tag"
+                                      Margin="0,0,0,10">
+                                <ComboBoxItem Content="8" Tag="8" />
+                                <ComboBoxItem Content="12" Tag="12" />
+                                <ComboBoxItem Content="16" Tag="16" />
+                                <ComboBoxItem Content="20" Tag="20" />
+                                <ComboBoxItem Content="24" Tag="24" />
+                                <ComboBoxItem Content="32" Tag="32" />
+                            </ComboBox>
+
+                            <TextBlock Text="帧率 (fps)" Margin="0,5" />
+                            <ComboBox SelectedValue="{Binding Config.MaxFps}" 
+                                      SelectedValuePath="Tag"
+                                      Margin="0,0,0,10">
+                                <ComboBoxItem Content="30" Tag="30" />
+                                <ComboBoxItem Content="60" Tag="60" />
+                                <ComboBoxItem Content="120" Tag="120" />
+                            </ComboBox>
+
+                            <CheckBox Content="启用音频" IsChecked="{Binding Config.EnableAudio}" Margin="0,5" />
+                            <CheckBox Content="启用触控" IsChecked="{Binding Config.EnableTouchControl}" Margin="0,5" />
+                            <CheckBox Content="无边框模式" IsChecked="{Binding Config.WindowBorderless}" Margin="0,5" />
+                            <CheckBox Content="窗口置顶" IsChecked="{Binding Config.WindowAlwaysOnTop}" Margin="0,5" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </GroupBox>
+            </Grid>
+
+            <Grid Name="SettingsPanel" 
+                  Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource BoolToVisibility}}">
                 <ScrollViewer>
-                    <StackPanel Margin="10">
-                        <TextBlock Text="分辨率 (0=不限制)" Margin="0,5" />
-                        <ComboBox SelectedValue="{Binding Config.MaxSize}" 
-                                  SelectedValuePath="Tag"
-                                  Margin="0,0,0,10">
-                            <ComboBoxItem Content="0=不限制" Tag="0" />
-                            <ComboBoxItem Content="1920" Tag="1920" />
-                            <ComboBoxItem Content="1080" Tag="1080" />
-                            <ComboBoxItem Content="720" Tag="720" />
-                            <ComboBoxItem Content="540" Tag="540" />
-                        </ComboBox>
+                    <Grid Margin="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                        <TextBlock Text="码率 (Mbps)" Margin="0,5" />
-                        <ComboBox SelectedValue="{Binding Config.BitRate}" 
-                                  SelectedValuePath="Tag"
-                                  Margin="0,0,0,10">
-                            <ComboBoxItem Content="8" Tag="8" />
-                            <ComboBoxItem Content="12" Tag="12" />
-                            <ComboBoxItem Content="16" Tag="16" />
-                            <ComboBoxItem Content="20" Tag="20" />
-                            <ComboBoxItem Content="24" Tag="24" />
-                            <ComboBoxItem Content="32" Tag="32" />
-                        </ComboBox>
+                        <TextBlock Grid.Row="0" Text="设置" FontSize="16" FontWeight="Bold" Margin="0,0,0,20" />
 
-                        <TextBlock Text="帧率 (fps)" Margin="0,5" />
-                        <ComboBox SelectedValue="{Binding Config.MaxFps}" 
-                                  SelectedValuePath="Tag"
-                                  Margin="0,0,0,10">
-                            <ComboBoxItem Content="30" Tag="30" />
-                            <ComboBoxItem Content="60" Tag="60" />
-                            <ComboBoxItem Content="120" Tag="120" />
-                        </ComboBox>
+                        <GroupBox Grid.Row="1" Header="路径设置" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Scrcpy 可执行文件：" VerticalAlignment="Center" Width="150" />
+                                    <TextBox Text="{Binding Config.ScrcpyPath, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="300" Margin="0,0,10,0" />
+                                    <Button Content="浏览..." 
+                                            Command="{Binding BrowseScrcpyCommand}"
+                                            Padding="15,5" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="ADB 可执行文件：" VerticalAlignment="Center" Width="150" />
+                                    <TextBox Text="{Binding Config.AdbPath, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="300" Margin="0,0,10,0" />
+                                    <Button Content="浏览..." 
+                                            Command="{Binding BrowseAdbCommand}"
+                                            Padding="15,5" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="截图保存路径：" VerticalAlignment="Center" Width="150" />
+                                    <TextBox Text="{Binding Config.ScreenshotSavePath, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="300" Margin="0,0,10,0" />
+                                    <Button Content="浏览..." 
+                                            Command="{Binding BrowseScreenshotPathCommand}"
+                                            Padding="15,5" />
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
 
-                        <CheckBox Content="启用音频" IsChecked="{Binding Config.EnableAudio}" Margin="0,5" />
-                        <CheckBox Content="启用触控" IsChecked="{Binding Config.EnableTouchControl}" Margin="0,5" />
-                        <CheckBox Content="无边框模式" IsChecked="{Binding Config.WindowBorderless}" Margin="0,5" />
-                        <CheckBox Content="窗口置顶" IsChecked="{Binding Config.WindowAlwaysOnTop}" Margin="0,5" />
-                    </StackPanel>
+                        <GroupBox Grid.Row="2" Header="悬浮窗设置" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <CheckBox Content="启用悬浮窗" 
+                                          IsChecked="{Binding Config.EnableFloatingWindow}"
+                                          Margin="0,5" />
+                                <CheckBox Content="启用智能输入悬浮窗" 
+                                          IsChecked="{Binding Config.EnableInputFloatingWindow}"
+                                          Margin="0,5" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Grid.Row="3" Header="快捷键设置" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="发送快捷键：" VerticalAlignment="Center" Width="150" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.SendShortcutKey}" Width="200" />
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Grid.Row="4" Header="输入框设置" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <CheckBox Content="启用回车发送" 
+                                          IsChecked="{Binding Config.EnableEnterSend}"
+                                          Margin="0,5" />
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                                    <TextBlock Text="键盘监控间隔(ms)：" VerticalAlignment="Center" Width="180" />
+                                    <TextBox Text="{Binding Config.KeyboardPollingInterval, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="100" VerticalContentAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="键盘显示防抖(ms)：" VerticalAlignment="Center" Width="180" />
+                                    <TextBox Text="{Binding Config.KeyboardShowDebounce, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="100" VerticalContentAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="键盘隐藏防抖(ms)：" VerticalAlignment="Center" Width="180" />
+                                    <TextBox Text="{Binding Config.KeyboardHideDebounce, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="100" VerticalContentAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="位置更新间隔(ms)：" VerticalAlignment="Center" Width="180" />
+                                    <TextBox Text="{Binding Config.PositionUpdateInterval, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="100" VerticalContentAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Scrcpy启动等待(ms)：" VerticalAlignment="Center" Width="180" />
+                                    <TextBox Text="{Binding Config.ScrcpyStartupDelay, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="100" VerticalContentAlignment="Center" />
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="保存配置" 
+                                    Command="{Binding SaveConfigCommand}"
+                                    Width="100" Margin="5" Padding="10,5" />
+                        </StackPanel>
+                    </Grid>
                 </ScrollViewer>
-            </GroupBox>
+            </Grid>
         </Grid>
 
         <GroupBox Header="日志" Grid.Row="2" Margin="5" Height="150">

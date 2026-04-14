@@ -84,6 +84,57 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    public int KeyboardPollingInterval
+    {
+        get => _config.KeyboardPollingInterval;
+        set
+        {
+            _config.KeyboardPollingInterval = value;
+            OnPropertyChanged(nameof(KeyboardPollingInterval));
+        }
+    }
+
+    public int KeyboardShowDebounce
+    {
+        get => _config.KeyboardShowDebounce;
+        set
+        {
+            _config.KeyboardShowDebounce = value;
+            OnPropertyChanged(nameof(KeyboardShowDebounce));
+        }
+    }
+
+    public int KeyboardHideDebounce
+    {
+        get => _config.KeyboardHideDebounce;
+        set
+        {
+            _config.KeyboardHideDebounce = value;
+            OnPropertyChanged(nameof(KeyboardHideDebounce));
+        }
+    }
+
+    public int PositionUpdateInterval
+    {
+        get => _config.PositionUpdateInterval;
+        set
+        {
+            _config.PositionUpdateInterval = value;
+            OnPropertyChanged(nameof(PositionUpdateInterval));
+        }
+    }
+
+    public int ScrcpyStartupDelay
+    {
+        get => _config.ScrcpyStartupDelay;
+        set
+        {
+            _config.ScrcpyStartupDelay = value;
+            OnPropertyChanged(nameof(ScrcpyStartupDelay));
+        }
+    }
+
+    public ICommand ResetTimingsCommand { get; }
     public ICommand BrowseScrcpyCommand { get; }
     public ICommand BrowseAdbCommand { get; }
     public ICommand BrowseScreenshotPathCommand { get; }
@@ -102,8 +153,18 @@ public class SettingsViewModel : ViewModelBase
         BrowseScrcpyCommand = new RelayCommand(_ => BrowseScrcpy());
         BrowseAdbCommand = new RelayCommand(_ => BrowseAdb());
         BrowseScreenshotPathCommand = new RelayCommand(_ => BrowseScreenshotPath());
+        ResetTimingsCommand = new RelayCommand(_ => ResetTimings());
         SaveCommand = new RelayCommand(_ => Save(), _ => CanSave());
         CancelCommand = new RelayCommand(_ => Cancel());
+    }
+    
+    private void ResetTimings()
+    {
+        KeyboardPollingInterval = 350;
+        KeyboardShowDebounce = 200;
+        KeyboardHideDebounce = 300;
+        PositionUpdateInterval = 500;
+        ScrcpyStartupDelay = 2000;
     }
 
     private void BrowseScrcpy()

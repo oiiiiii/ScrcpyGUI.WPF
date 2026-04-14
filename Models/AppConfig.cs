@@ -20,4 +20,10 @@ public class AppConfig
     public bool EnableEnterSend { get; set; } = true;
     public List<string> EnterSendPackageList { get; set; } = new();
     public string SendShortcutKey { get; set; } = "Ctrl+Enter";
+    
+    public int KeyboardPollingInterval { get; set; } = 350;
+    public int KeyboardShowDebounce { get; set; } = 200;
+    public int KeyboardHideDebounce { get; set; } = 300;
+    public int PositionUpdateInterval { get; set; } = 500;
+    public int ScrcpyStartupDelay { get; set; } = 2000;
 }
