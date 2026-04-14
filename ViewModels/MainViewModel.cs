@@ -387,8 +387,12 @@ public class MainViewModel : ViewModelBase
                 _inputFloatingWindow = new InputFloatingWindow();
                 LogHelper.Info("连接 SendRequested 事件...");
                 _inputFloatingWindow.ViewModel.SendRequested += OnInputSendRequested;
-                _inputFloatingWindow.ViewModel.EnableEnterSend = Config.EnableEnterSend;
+                _inputFloatingWindow.EnableEnterSend = Config.EnableEnterSend;
                 _inputFloatingWindow.SendShortcutKey = Config.SendShortcutKey;
+                _inputFloatingWindow.SetPackageAccessors(
+                    () => _inputMonitor?.CurrentForegroundPackage ?? string.Empty,
+                    () => Config.EnterSendPackageList.ToList()
+                );
                 _inputFloatingWindow.ViewModel.PropertyChanged += OnInputViewModelPropertyChanged;
                 LogHelper.Info("输入悬浮窗创建完成，事件已连接");
             }
@@ -397,11 +401,7 @@ public class MainViewModel : ViewModelBase
 
     private void OnInputViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(InputFloatingViewModel.EnableEnterSend) && _inputFloatingWindow != null)
-        {
-            Config.EnableEnterSend = _inputFloatingWindow.ViewModel.EnableEnterSend;
-            ConfigHelper.SaveConfig(Config);
-        }
+        // 不再需要，因为现在不通过 ViewModel 的属性
     }
 
     private void HideInputFloatingWindow()
@@ -485,19 +485,34 @@ public class MainViewModel : ViewModelBase
         {
             LogHelper.Info($"准备发送文本: {text}");
             
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                LogHelper.Warning("文本为空，不发送");
+                return;
+            }
+            
+            // 获取当前前台应用包名
+            var currentPackage = _inputMonitor?.CurrentForegroundPackage ?? string.Empty;
+            var shouldSendEnter = false;
+            
+            // 检查是否需要发送回车
+            if (Config.EnableEnterSend && !string.IsNullOrEmpty(currentPackage) && Config.EnterSendPackageList.Contains(currentPackage))
+            {
+                shouldSendEnter = true;
+                LogHelper.Info($"当前应用 '{currentPackage}' 在回车发送列表中，将在文本发送后自动发送回车");
+            }
+            
+            // 发送文本
             if (_textSender != null)
             {
                 await _textSender.SendTextAsync(text);
-
-                if (Config.EnableEnterSend)
+                
+                // 如果需要，发送回车
+                if (shouldSendEnter)
                 {
-                    var currentPackage = _inputMonitor?.CurrentForegroundPackage ?? string.Empty;
-                    if (!string.IsNullOrEmpty(currentPackage) && Config.EnterSendPackageList.Contains(currentPackage))
-                    {
-                        await System.Threading.Tasks.Task.Delay(100);
-                        await _textSender.SendEnterKeyAsync();
-                        LogHelper.Info($"已向 {currentPackage} 发送回车");
-                    }
+                    await System.Threading.Tasks.Task.Delay(100);
+                    await _textSender.SendEnterKeyAsync();
+                    LogHelper.Info($"已向 {currentPackage} 发送回车");
                 }
             }
             else
@@ -505,15 +520,12 @@ public class MainViewModel : ViewModelBase
                 LogHelper.Info("使用 ADB 方案发送文本");
                 AdbHelper.SendText(SelectedDevice.SerialNumber, text);
                 
-                if (Config.EnableEnterSend)
+                // 如果需要，发送回车
+                if (shouldSendEnter)
                 {
-                    var currentPackage = _inputMonitor?.CurrentForegroundPackage ?? string.Empty;
-                    if (!string.IsNullOrEmpty(currentPackage) && Config.EnterSendPackageList.Contains(currentPackage))
-                    {
-                        await System.Threading.Tasks.Task.Delay(100);
-                        AdbHelper.SendKeyEvent(SelectedDevice.SerialNumber, 66);
-                        LogHelper.Info($"已向 {currentPackage} 发送回车");
-                    }
+                    await System.Threading.Tasks.Task.Delay(100);
+                    AdbHelper.SendKeyEvent(SelectedDevice.SerialNumber, 66);
+                    LogHelper.Info($"已向 {currentPackage} 发送回车");
                 }
             }
 

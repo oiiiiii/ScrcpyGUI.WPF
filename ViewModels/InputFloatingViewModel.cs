@@ -5,7 +5,6 @@ namespace ScrcpyGUI.WPF.ViewModels;
 public class InputFloatingViewModel : ViewModelBase
 {
     private string _inputText = string.Empty;
-    private bool _enableEnterSend = true;
     private string _statusMessage = string.Empty;
 
     public string InputText
@@ -18,12 +17,6 @@ public class InputFloatingViewModel : ViewModelBase
                 ((RelayCommand)SendTextCommand).RaiseCanExecuteChanged();
             }
         }
-    }
-
-    public bool EnableEnterSend
-    {
-        get => _enableEnterSend;
-        set => SetProperty(ref _enableEnterSend, value);
     }
 
     public string StatusMessage

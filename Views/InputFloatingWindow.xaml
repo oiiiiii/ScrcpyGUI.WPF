@@ -34,27 +34,11 @@
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0"
-                           Text="智能中文输入"
+                <TextBlock Text="智能中文输入"
                            Foreground="White"
                            FontWeight="SemiBold"
                            FontSize="14"
                            VerticalAlignment="Center" />
-
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <CheckBox x:Name="EnterSendCheckBox"
-                              Content="回车发送"
-                              IsChecked="{Binding EnableEnterSend}"
-                              Foreground="White"
-                              FontSize="12"
-                              VerticalAlignment="Center"
-                              Margin="0,0,10,0" />
-                </StackPanel>
             </Grid>
 
             <TextBox x:Name="InputTextBox"

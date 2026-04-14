@@ -192,19 +192,22 @@ public static class AdbHelper
         {
             LogHelper.Info($"正在发送文本到设备: {text}");
             
-            // 方案1：先尝试纯 ASCII 用 adb input text
+            // 检查文本是否包含换行符
+            var hasNewline = text.Contains('\n') || text.Contains('\r');
+            
+            // 方案1：纯 ASCII 且无换行符 → 用 adb input text
             var isAsciiOnly = text.All(c => c < 128);
-            if (isAsciiOnly)
+            if (isAsciiOnly && !hasNewline)
             {
-                LogHelper.Info("检测到纯 ASCII 文本，使用 adb input text");
+                LogHelper.Info("检测到纯 ASCII 文本且无换行符，使用 adb input text");
                 var escapedText = text.Replace(" ", "%s");
                 ExecuteAdbCommand($"-s {serial} shell input text \"{escapedText}\"");
                 LogHelper.Info("✅ 文本已发送到设备！");
                 return true;
             }
             
-            // 方案2：中文/Unicode - 直接给 scrcpy 窗口发送 Ctrl+V 消息！
-            LogHelper.Info("检测到非 ASCII 文本，使用 PostMessage 方案");
+            // 方案2：非 ASCII 或有换行符 → 使用剪贴板 + Ctrl+V 方案
+            LogHelper.Info("检测到非 ASCII 文本或有换行符，使用 PostMessage 方案");
             
             // 步骤1：设置 Windows 剪贴板
             LogHelper.Info("步骤1：设置 Windows 剪贴板");

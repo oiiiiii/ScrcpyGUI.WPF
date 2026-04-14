@@ -11,11 +11,26 @@ public partial class InputFloatingWindow : Window
     public InputFloatingViewModel ViewModel => (InputFloatingViewModel)DataContext;
     
     private string _sendShortcutKey = "Ctrl+Enter";
+    private bool _enableEnterSend = true;
+    private Func<string>? _getCurrentPackageFunc;
+    private Func<List<string>>? _getPackageListFunc;
     
     public string SendShortcutKey
     {
         get => _sendShortcutKey;
         set => _sendShortcutKey = value;
+    }
+    
+    public bool EnableEnterSend
+    {
+        get => _enableEnterSend;
+        set => _enableEnterSend = value;
+    }
+    
+    public void SetPackageAccessors(Func<string> getCurrentPackage, Func<List<string>> getPackageList)
+    {
+        _getCurrentPackageFunc = getCurrentPackage;
+        _getPackageListFunc = getPackageList;
     }
 
     public InputFloatingWindow()
@@ -51,13 +66,30 @@ public partial class InputFloatingWindow : Window
             
             if (isShiftPressed)
             {
+                // Shift+Enter: 始终换行，不发送
                 return;
             }
-            else if (ViewModel.EnableEnterSend)
+            else if (_enableEnterSend)
             {
-                ScrcpyGUI.WPF.Helpers.LogHelper.Info("[InputFloatingWindow] Enter键被按下，准备发送文本");
-                SendTextDirectly();
-                e.Handled = true;
+                // 检查当前包名是否在列表中
+                var currentPackage = _getCurrentPackageFunc?.Invoke() ?? string.Empty;
+                var packageList = _getPackageListFunc?.Invoke() ?? new List<string>();
+                
+                ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] Enter键被按下，当前包名: {currentPackage}，列表包含: {packageList.Contains(currentPackage)}");
+                
+                if (packageList.Contains(currentPackage))
+                {
+                    // 在列表内：发送文本 + 发送回车
+                    ScrcpyGUI.WPF.Helpers.LogHelper.Info("[InputFloatingWindow] 当前包名在列表中，准备发送文本");
+                    SendTextDirectly();
+                    e.Handled = true;
+                }
+                else
+                {
+                    // 不在列表内：只换行，不发送
+                    ScrcpyGUI.WPF.Helpers.LogHelper.Info("[InputFloatingWindow] 当前包名不在列表中，只换行不发送");
+                    // 不设置 e.Handled = true，让 TextBox 自己处理换行
+                }
             }
         }
     }
