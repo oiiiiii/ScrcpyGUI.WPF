@@ -143,6 +143,12 @@
                             <CheckBox Content="启用触控" IsChecked="{Binding Config.EnableTouchControl}" Margin="0,5" />
                             <CheckBox Content="无边框模式" IsChecked="{Binding Config.WindowBorderless}" Margin="0,5" />
                             <CheckBox Content="窗口置顶" IsChecked="{Binding Config.WindowAlwaysOnTop}" Margin="0,5" />
+                            <CheckBox Content="启动时录屏" IsChecked="{Binding Config.RecordOnStart}" Margin="0,5" />
+                            <CheckBox Content="黑屏启动" IsChecked="{Binding Config.BlackScreenOnStart}" Margin="0,5" />
+                            <CheckBox Content="显示触摸" IsChecked="{Binding Config.ShowTouch}" Margin="0,5" />
+                            <CheckBox Content="旋转镜像" IsChecked="{Binding Config.RotateMirror}" Margin="0,5" />
+                            <CheckBox Content="全屏启动" IsChecked="{Binding Config.FullscreenOnStart}" Margin="0,5" />
+                            <CheckBox Content="关闭后锁屏" IsChecked="{Binding Config.LockScreenOnClose}" Margin="0,5" />
                         </StackPanel>
                     </ScrollViewer>
                 </GroupBox>
@@ -219,6 +225,63 @@
                                 <StackPanel Orientation="Horizontal" Margin="0,5">
                                     <TextBlock Text="显示悬浮窗：" VerticalAlignment="Center" Width="180" />
                                     <local:ShortcutKeyBox ShortcutKey="{Binding Config.ShowFloatingWindowShortcutKey}" Width="200" />
+                                </StackPanel>
+                                <Separator Margin="10,0" />
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="返回：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.BackKeyShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="主页：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.HomeKeyShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="全屏：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.FullscreenShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="窗口1:1显示：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.Window1x1Shortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="多任务：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.RecentAppsShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="音量+：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.VolumeUpShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="音量-：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.VolumeDownShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="旋转镜像：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.RotateMirrorShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="锁屏：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.LockScreenShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="亮屏：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.TurnScreenOnShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="关闭背光：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.TurnScreenOffShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="展开通知：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.ExpandNotificationShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="复制：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.CopyShortcut}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="粘贴：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.PasteShortcut}" Width="200" />
                                 </StackPanel>
                             </StackPanel>
                         </GroupBox>

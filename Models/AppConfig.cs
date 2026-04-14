@@ -37,4 +37,26 @@ public class AppConfig
     public TextTransferMode TextTransferMode { get; set; } = TextTransferMode.TextInjection;
     public string LastWifiIp { get; set; } = string.Empty;
     public int LastWifiPort { get; set; } = 5555;
+    
+    public bool RecordOnStart { get; set; } = false;
+    public bool BlackScreenOnStart { get; set; } = false;
+    public bool ShowTouch { get; set; } = true;
+    public bool RotateMirror { get; set; } = false;
+    public bool FullscreenOnStart { get; set; } = false;
+    public bool LockScreenOnClose { get; set; } = false;
+    
+    public string BackKeyShortcut { get; set; } = "MouseRight";
+    public string HomeKeyShortcut { get; set; } = "MouseWheelDown";
+    public string FullscreenShortcut { get; set; } = "Alt+F";
+    public string Window1x1Shortcut { get; set; } = "Alt+G";
+    public string RecentAppsShortcut { get; set; } = "Alt+S";
+    public string VolumeUpShortcut { get; set; } = "Alt+Up";
+    public string VolumeDownShortcut { get; set; } = "Alt+Down";
+    public string RotateMirrorShortcut { get; set; } = "Alt+Left";
+    public string LockScreenShortcut { get; set; } = "Alt+P";
+    public string TurnScreenOnShortcut { get; set; } = "MouseRightDouble";
+    public string TurnScreenOffShortcut { get; set; } = "Alt+O";
+    public string ExpandNotificationShortcut { get; set; } = "Alt+N";
+    public string CopyShortcut { get; set; } = "Ctrl+C";
+    public string PasteShortcut { get; set; } = "Ctrl+V";
 }

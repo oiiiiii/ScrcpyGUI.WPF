@@ -167,6 +167,31 @@ public static class ScrcpyHelper
             sb.Append(" --always-on-top");
         }
         
+        if (config.RecordOnStart)
+        {
+            sb.Append($" --record={Path.Combine(config.RecordSavePath, $"scrcpy_{DateTime.Now:yyyyMMdd_HHmmss}.mp4")}");
+        }
+        
+        if (config.BlackScreenOnStart)
+        {
+            sb.Append(" --turn-screen-off");
+        }
+        
+        if (!config.ShowTouch)
+        {
+            sb.Append(" --no-show-touches");
+        }
+        
+        if (config.RotateMirror)
+        {
+            sb.Append(" --rotation=270");
+        }
+        
+        if (config.FullscreenOnStart)
+        {
+            sb.Append(" --fullscreen");
+        }
+        
         sb.Append(" --video-codec=h264");
         sb.Append(" --no-power-on");
 
@@ -205,6 +230,151 @@ public static class ScrcpyHelper
         else
         {
             LogHelper.Info("投屏已停止");
+        }
+    }
+
+    public static void PushFile(string deviceSerial, string filePath, string adbPath)
+    {
+        if (!File.Exists(filePath))
+        {
+            LogHelper.Error($"文件不存在: {filePath}");
+            return;
+        }
+
+        try
+        {
+            var fileName = Path.GetFileName(filePath);
+            var targetPath = $"/sdcard/Download/{fileName}";
+            
+            LogHelper.Info($"正在推送文件: {filePath} -> {targetPath}");
+
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = string.IsNullOrWhiteSpace(adbPath) ? "adb" : adbPath,
+                    Arguments = $"-s {deviceSerial} push \"{filePath}\" {targetPath}",
+                    WorkingDirectory = Path.GetDirectoryName(adbPath) ?? Environment.CurrentDirectory,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                }
+            };
+
+            process.OutputDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    LogHelper.Info($"[adb push] {e.Data}");
+            };
+            process.ErrorDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    LogHelper.Error($"[adb push] {e.Data}");
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            process.WaitForExit();
+
+            if (process.ExitCode == 0)
+            {
+                LogHelper.Info($"文件推送成功: {fileName}");
+            }
+            else
+            {
+                LogHelper.Error($"文件推送失败，退出代码: {process.ExitCode}");
+            }
+
+            process.Dispose();
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"推送文件失败: {ex.Message}");
+        }
+    }
+
+    public static void InstallApk(string deviceSerial, string apkPath, string adbPath)
+    {
+        if (!File.Exists(apkPath))
+        {
+            LogHelper.Error($"APK文件不存在: {apkPath}");
+            return;
+        }
+
+        if (!apkPath.EndsWith(".apk", StringComparison.OrdinalIgnoreCase))
+        {
+            LogHelper.Error("不是有效的APK文件");
+            return;
+        }
+
+        try
+        {
+            LogHelper.Info($"正在安装APK: {apkPath}");
+
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = string.IsNullOrWhiteSpace(adbPath) ? "adb" : adbPath,
+                    Arguments = $"-s {deviceSerial} install -r \"{apkPath}\"",
+                    WorkingDirectory = Path.GetDirectoryName(adbPath) ?? Environment.CurrentDirectory,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                }
+            };
+
+            process.OutputDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    LogHelper.Info($"[adb install] {e.Data}");
+            };
+            process.ErrorDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    LogHelper.Error($"[adb install] {e.Data}");
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            process.WaitForExit();
+
+            if (process.ExitCode == 0)
+            {
+                LogHelper.Info("APK安装成功");
+            }
+            else
+            {
+                LogHelper.Error($"APK安装失败，退出代码: {process.ExitCode}");
+            }
+
+            process.Dispose();
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"安装APK失败: {ex.Message}");
+        }
+    }
+
+    public static void HandleFileDrop(string deviceSerial, string[] filePaths, string adbPath)
+    {
+        foreach (var filePath in filePaths)
+        {
+            if (!File.Exists(filePath))
+                continue;
+
+            if (filePath.EndsWith(".apk", StringComparison.OrdinalIgnoreCase))
+            {
+                InstallApk(deviceSerial, filePath, adbPath);
+            }
+            else
+            {
+                PushFile(deviceSerial, filePath, adbPath);
+            }
         }
     }
 }

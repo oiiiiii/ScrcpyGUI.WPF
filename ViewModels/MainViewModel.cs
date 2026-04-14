@@ -298,6 +298,12 @@ public class MainViewModel : ViewModelBase
             HideFloatingWindow();
             CleanupInputFloatingWindow();
             WindowHelper.ResetScrcpyWindowLog();
+            
+            if (Config.LockScreenOnClose && SelectedDevice != null)
+            {
+                LogHelper.Info("关闭后锁屏");
+                AdbHelper.SendKeyEvent(SelectedDevice.SerialNumber, 26);
+            }
         });
     }
 

@@ -39,6 +39,28 @@ public class ConfigDto
     public TextTransferModeDto TextTransferMode { get; set; } = TextTransferModeDto.TextInjection;
     public string LastWifiIp { get; set; } = string.Empty;
     public int LastWifiPort { get; set; } = 5555;
+    
+    public bool RecordOnStart { get; set; } = false;
+    public bool BlackScreenOnStart { get; set; } = false;
+    public bool ShowTouch { get; set; } = true;
+    public bool RotateMirror { get; set; } = false;
+    public bool FullscreenOnStart { get; set; } = false;
+    public bool LockScreenOnClose { get; set; } = false;
+    
+    public string BackKeyShortcut { get; set; } = "MouseRight";
+    public string HomeKeyShortcut { get; set; } = "MouseWheelDown";
+    public string FullscreenShortcut { get; set; } = "Alt+F";
+    public string Window1x1Shortcut { get; set; } = "Alt+G";
+    public string RecentAppsShortcut { get; set; } = "Alt+S";
+    public string VolumeUpShortcut { get; set; } = "Alt+Up";
+    public string VolumeDownShortcut { get; set; } = "Alt+Down";
+    public string RotateMirrorShortcut { get; set; } = "Alt+Left";
+    public string LockScreenShortcut { get; set; } = "Alt+P";
+    public string TurnScreenOnShortcut { get; set; } = "MouseRightDouble";
+    public string TurnScreenOffShortcut { get; set; } = "Alt+O";
+    public string ExpandNotificationShortcut { get; set; } = "Alt+N";
+    public string CopyShortcut { get; set; } = "Ctrl+C";
+    public string PasteShortcut { get; set; } = "Ctrl+V";
 }
 
 public static class ConfigHelper
@@ -94,7 +116,27 @@ public static class ConfigHelper
                         ScrcpyStartupDelay = dto.ScrcpyStartupDelay,
                         TextTransferMode = (TextTransferMode)dto.TextTransferMode,
                         LastWifiIp = dto.LastWifiIp,
-                        LastWifiPort = dto.LastWifiPort
+                        LastWifiPort = dto.LastWifiPort,
+                        RecordOnStart = dto.RecordOnStart,
+                        BlackScreenOnStart = dto.BlackScreenOnStart,
+                        ShowTouch = dto.ShowTouch,
+                        RotateMirror = dto.RotateMirror,
+                        FullscreenOnStart = dto.FullscreenOnStart,
+                        LockScreenOnClose = dto.LockScreenOnClose,
+                        BackKeyShortcut = dto.BackKeyShortcut,
+                        HomeKeyShortcut = dto.HomeKeyShortcut,
+                        FullscreenShortcut = dto.FullscreenShortcut,
+                        Window1x1Shortcut = dto.Window1x1Shortcut,
+                        RecentAppsShortcut = dto.RecentAppsShortcut,
+                        VolumeUpShortcut = dto.VolumeUpShortcut,
+                        VolumeDownShortcut = dto.VolumeDownShortcut,
+                        RotateMirrorShortcut = dto.RotateMirrorShortcut,
+                        LockScreenShortcut = dto.LockScreenShortcut,
+                        TurnScreenOnShortcut = dto.TurnScreenOnShortcut,
+                        TurnScreenOffShortcut = dto.TurnScreenOffShortcut,
+                        ExpandNotificationShortcut = dto.ExpandNotificationShortcut,
+                        CopyShortcut = dto.CopyShortcut,
+                        PasteShortcut = dto.PasteShortcut
                     };
                     
                     // 兼容旧配置：如果旧配置有SendShortcutKey但没有新配置，则使用旧值
@@ -147,7 +189,27 @@ public static class ConfigHelper
                 ScrcpyStartupDelay = config.ScrcpyStartupDelay,
                 TextTransferMode = (TextTransferModeDto)config.TextTransferMode,
                 LastWifiIp = config.LastWifiIp,
-                LastWifiPort = config.LastWifiPort
+                LastWifiPort = config.LastWifiPort,
+                RecordOnStart = config.RecordOnStart,
+                BlackScreenOnStart = config.BlackScreenOnStart,
+                ShowTouch = config.ShowTouch,
+                RotateMirror = config.RotateMirror,
+                FullscreenOnStart = config.FullscreenOnStart,
+                LockScreenOnClose = config.LockScreenOnClose,
+                BackKeyShortcut = config.BackKeyShortcut,
+                HomeKeyShortcut = config.HomeKeyShortcut,
+                FullscreenShortcut = config.FullscreenShortcut,
+                Window1x1Shortcut = config.Window1x1Shortcut,
+                RecentAppsShortcut = config.RecentAppsShortcut,
+                VolumeUpShortcut = config.VolumeUpShortcut,
+                VolumeDownShortcut = config.VolumeDownShortcut,
+                RotateMirrorShortcut = config.RotateMirrorShortcut,
+                LockScreenShortcut = config.LockScreenShortcut,
+                TurnScreenOnShortcut = config.TurnScreenOnShortcut,
+                TurnScreenOffShortcut = config.TurnScreenOffShortcut,
+                ExpandNotificationShortcut = config.ExpandNotificationShortcut,
+                CopyShortcut = config.CopyShortcut,
+                PasteShortcut = config.PasteShortcut
             };
             
             var options = new JsonSerializerOptions
