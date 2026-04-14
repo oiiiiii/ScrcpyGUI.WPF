@@ -3,8 +3,17 @@
 一个基于 WPF 开发的 Android 设备投屏工具，提供友好的图形界面和丰富的功能。主要是之前用的晨钟酱写的GUI程序停更了，也没弄清楚怎么把新版本的scrcpy程序替换进去。然后就找TRAE重写了一个，顺便解决了中文输入的问题。这个GUI程序比之QtScrcpy和EScrcpy还有很大不足，但是创新性的添加了悬浮窗功能，可以直接在投屏窗口底部输入中文，执行发送，而不需要通过虚拟键盘，极大地保证了稳定性和兼容性。兜底的解决思路是在执行发送时自动执行控制端复制+被控端粘贴的动作。在一些回车键可以发送消息的界面，用户还可以选择追加回车键，实现一键发送消息。主要就是用于平时主要在电脑操作，时不时的还要用手机回复一下消息的人群，喜欢群控、打字场景少的还是用其他版本就行，本版并不能带来其他更好的体验。
 
 下载链接（内置scrcpy3.3.4，不包含.NET8.0运行时）：https://diaoyu.lanzouu.com/ijpul3n9tyuj
+
+
 项目地址：https://github.com/oiiiiii/ScrcpyGUI.WPF
+
+
 .NET8.0运行时：https://dotnet.microsoft.com/zh-cn/download/dotnet/8.0
+
+
+有bug或者特殊需求的话clone代码自己修改即可，我最近比较忙，可能改的很慢
+
+
 下面是一些AI写的功能介绍，随需阅读：
 
 。
@@ -141,3 +150,5 @@ MIT License
 - 文件拖拽传输
 - 丰富的参数配置
 - 可自定义快捷键
+
+[![ScreenShot 2026 04 14 234924 867](https://origin.picgo.net/2026/04/14/ScreenShot_2026-04-14_234924_8670b0d0d79f0a0bd7f.th.png)](https://www.picgo.net/image/ScreenShot-2026-04-14-234924-867.1ymGzk) [![ScreenShot 2026 04 14 235034 114](https://origin.picgo.net/2026/04/14/ScreenShot_2026-04-14_235034_11417cc571e28f3fa15.th.png)](https://www.picgo.net/image/ScreenShot-2026-04-14-235034-114.1ymQFl)
