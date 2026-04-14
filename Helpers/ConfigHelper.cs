@@ -37,6 +37,8 @@ public class ConfigDto
     public int PositionUpdateInterval { get; set; } = 500;
     public int ScrcpyStartupDelay { get; set; } = 2000;
     public TextTransferModeDto TextTransferMode { get; set; } = TextTransferModeDto.TextInjection;
+    public string LastWifiIp { get; set; } = string.Empty;
+    public int LastWifiPort { get; set; } = 5555;
 }
 
 public static class ConfigHelper
@@ -90,7 +92,9 @@ public static class ConfigHelper
                         KeyboardHideDebounce = dto.KeyboardHideDebounce,
                         PositionUpdateInterval = dto.PositionUpdateInterval,
                         ScrcpyStartupDelay = dto.ScrcpyStartupDelay,
-                        TextTransferMode = (TextTransferMode)dto.TextTransferMode
+                        TextTransferMode = (TextTransferMode)dto.TextTransferMode,
+                        LastWifiIp = dto.LastWifiIp,
+                        LastWifiPort = dto.LastWifiPort
                     };
                     
                     // 兼容旧配置：如果旧配置有SendShortcutKey但没有新配置，则使用旧值
@@ -141,7 +145,9 @@ public static class ConfigHelper
                 KeyboardHideDebounce = config.KeyboardHideDebounce,
                 PositionUpdateInterval = config.PositionUpdateInterval,
                 ScrcpyStartupDelay = config.ScrcpyStartupDelay,
-                TextTransferMode = (TextTransferModeDto)config.TextTransferMode
+                TextTransferMode = (TextTransferModeDto)config.TextTransferMode,
+                LastWifiIp = config.LastWifiIp,
+                LastWifiPort = config.LastWifiPort
             };
             
             var options = new JsonSerializerOptions

@@ -9,6 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>ScrcpyGUI</AssemblyName>
     <RootNamespace>ScrcpyGUI.WPF</RootNamespace>
+    <ApplicationIcon>logo.ico</ApplicationIcon>
   </PropertyGroup>
 
 </Project>

@@ -105,6 +105,7 @@ public class MainViewModel : ViewModelBase
     public ICommand BrowseAdbCommand { get; }
     public ICommand BrowseScreenshotPathCommand { get; }
     public ICommand SaveConfigCommand { get; }
+    public ICommand ShowWifiConnectWindowCommand { get; }
 
     public MainViewModel()
     {
@@ -121,6 +122,7 @@ public class MainViewModel : ViewModelBase
         BrowseAdbCommand = new RelayCommand(_ => BrowseAdb());
         BrowseScreenshotPathCommand = new RelayCommand(_ => BrowseScreenshotPath());
         SaveConfigCommand = new RelayCommand(_ => SaveConfig());
+        ShowWifiConnectWindowCommand = new RelayCommand(_ => ShowWifiConnectWindow());
 
         LogHelper.LogMessage += OnLogMessage;
         ScrcpyHelper.ScrcpyStarted += OnScrcpyStarted;
@@ -763,5 +765,24 @@ public class MainViewModel : ViewModelBase
             _inputFloatingWindow.Focus();
             _inputFloatingWindow.FocusInputBox();
         }
+    }
+
+    private void ShowWifiConnectWindow()
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            var mainWindow = System.Windows.Application.Current.MainWindow;
+            if (mainWindow != null)
+            {
+                var wifiWindow = new WifiConnectWindow(_config);
+                wifiWindow.Owner = mainWindow;
+                wifiWindow.DeviceConnected += (s, e) =>
+                {
+                    // 连接成功后刷新设备列表
+                    RefreshDevices();
+                };
+                wifiWindow.ShowDialog();
+            }
+        });
     }
 }

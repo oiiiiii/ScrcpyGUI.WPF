@@ -35,4 +35,6 @@ public class AppConfig
     public int PositionUpdateInterval { get; set; } = 500;
     public int ScrcpyStartupDelay { get; set; } = 2000;
     public TextTransferMode TextTransferMode { get; set; } = TextTransferMode.TextInjection;
+    public string LastWifiIp { get; set; } = string.Empty;
+    public int LastWifiPort { get; set; } = 5555;
 }

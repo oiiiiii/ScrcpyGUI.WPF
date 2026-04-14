@@ -31,6 +31,8 @@
                     Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource BoolToVisibility}}" />
             <Button Content="🔄 刷新设备" Command="{Binding RefreshDevicesCommand}" Margin="5,0" Padding="10,5" 
                     Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
+            <Button Content="📡 无线连接" Command="{Binding ShowWifiConnectWindowCommand}" Margin="5,0" Padding="10,5" 
+                    Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
             <Separator />
             <Button Content="⚙️ 设置" Command="{Binding ToggleSettingsCommand}" Margin="5,0" Padding="10,5" 
                     Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
