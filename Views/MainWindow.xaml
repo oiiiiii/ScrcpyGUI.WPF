@@ -36,13 +36,25 @@
             <Separator />
             <Button Content="⚙️ 设置" Command="{Binding ToggleSettingsCommand}" Margin="5,0" Padding="10,5" 
                     Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
-            <Button Content="❓ 帮助" Margin="5,0" Padding="10,5" 
+            <Button Content="ℹ️ 关于" Command="{Binding ShowAboutWindowCommand}" Margin="5,0" Padding="10,5" 
                     Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
         </ToolBar>
 
         <Grid Grid.Row="1">
-            <Grid Name="MainPanel" 
-                  Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}">
+            <Grid Name="MainPanel">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSettingsPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsAboutPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="200" MinWidth="150" />
                     <ColumnDefinition Width="*" MinWidth="200" />
@@ -154,8 +166,20 @@
                 </GroupBox>
             </Grid>
 
-            <Grid Name="SettingsPanel" 
-                  Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource BoolToVisibility}}">
+            <Grid Name="SettingsPanel">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSettingsPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsAboutPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
                 <ScrollViewer>
                     <Grid Margin="20">
                         <Grid.RowDefinitions>
@@ -332,6 +356,77 @@
                                     Command="{Binding SaveConfigCommand}"
                                     Width="100" Margin="5" Padding="10,5" />
                         </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </Grid>
+
+            <Grid Name="AboutPanel">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsAboutPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsSettingsPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <ScrollViewer>
+                    <Grid Margin="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="关于" FontSize="16" FontWeight="Bold" Margin="0,0,0,20" />
+
+                        <GroupBox Grid.Row="1" Header="应用信息" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <TextBlock Text="Scrcpy GUI" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10,0,5" />
+                                <TextBlock Text="WPF 版 Android 设备投屏工具" FontSize="12" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,10" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Grid.Row="2" Header="版本信息" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="版本号：" Width="100" />
+                                    <TextBlock Text="1.0.0" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="构建日期：" Width="100" />
+                                    <TextBlock Text="2026-04-14" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text=".NET 版本：" Width="100" />
+                                    <TextBlock Text="8.0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Grid.Row="3" Header="版权信息" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <TextBlock Text="Copyright © 52破解-YMXuan" Margin="0,5" />
+                                <TextBlock Text="All rights reserved." Margin="0,5" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Grid.Row="4" Header="致谢" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <TextBlock Text="本工具基于 scrcpy 项目开发" FontSize="12" />
+                                <TextBlock Text="感谢 Genymobile 提供的 scrcpy 开源项目" FontSize="12" />
+                                <TextBlock Text="https://github.com/Genymobile/scrcpy" FontSize="12" Foreground="Blue" Cursor="Hand" />
+                                <TextBlock Text="感谢 晨钟酱 提供的 scrcpy_GUI项目" FontSize="12" />
+                            </StackPanel>
+                        </GroupBox>
+
+
                     </Grid>
                 </ScrollViewer>
             </Grid>

@@ -7,7 +7,7 @@ namespace ScrcpyGUI.WPF.Helpers;
 public class InputMethodMonitor : IDisposable
 {
     private readonly string _serialNumber;
-    private readonly System.Windows.Threading.DispatcherTimer _timer;
+    private System.Windows.Threading.DispatcherTimer? _timer;
     private bool _isKeyboardVisible;
     private string _currentForegroundPackage = string.Empty;
     private readonly Stopwatch _showDebounce = new();
@@ -15,6 +15,8 @@ public class InputMethodMonitor : IDisposable
     private readonly int _showDebounceMs;
     private readonly int _hideDebounceMs;
     private bool _disposed;
+    
+    private static readonly Regex _foregroundPackageRegex = new(@"mCurrentFocus.*u0\s+([\w.]+)/", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public event EventHandler<bool>? KeyboardVisibilityChanged;
     public event EventHandler<string>? ForegroundPackageChanged;
@@ -126,7 +128,7 @@ public class InputMethodMonitor : IDisposable
         try
         {
             var output = await ExecuteAdbCommandAsync("shell dumpsys window displays");
-            var match = Regex.Match(output, @"mCurrentFocus.*u0\s+([\w.]+)/", RegexOptions.Compiled);
+            var match = _foregroundPackageRegex.Match(output);
             if (match.Success)
             {
                 return match.Groups[1].Value;
@@ -143,7 +145,7 @@ public class InputMethodMonitor : IDisposable
     {
         return await Task.Run(() =>
         {
-            var process = new Process
+            using var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
@@ -167,7 +169,12 @@ public class InputMethodMonitor : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        _timer.Stop();
-        _timer.Tick -= OnTimerTick;
+        
+        if (_timer != null)
+        {
+            _timer.Stop();
+            _timer.Tick -= OnTimerTick;
+            _timer = null;
+        }
     }
 }

@@ -194,6 +194,7 @@ public static class ScrcpyHelper
         
         sb.Append(" --video-codec=h264");
         sb.Append(" --no-power-on");
+        sb.Append(" --push-target=/sdcard/Download/");
 
         return sb.ToString();
     }
@@ -258,7 +259,9 @@ public static class ScrcpyHelper
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true
+                    RedirectStandardError = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8,
+                    StandardErrorEncoding = System.Text.Encoding.UTF8
                 }
             };
 
@@ -323,7 +326,9 @@ public static class ScrcpyHelper
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true
+                    RedirectStandardError = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8,
+                    StandardErrorEncoding = System.Text.Encoding.UTF8
                 }
             };
 

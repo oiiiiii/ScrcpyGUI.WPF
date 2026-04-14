@@ -7,7 +7,7 @@ using ScrcpyGUI.WPF.Views;
 
 namespace ScrcpyGUI.WPF.ViewModels;
 
-public class MainViewModel : ViewModelBase
+public class MainViewModel : ViewModelBase, IDisposable
 {
     private ObservableCollection<DeviceInfo> _devices = new();
     private DeviceInfo? _selectedDevice;
@@ -94,6 +94,13 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _isSettingsPanelVisible, value);
     }
 
+    private bool _isAboutPanelVisible;
+    public bool IsAboutPanelVisible
+    {
+        get => _isAboutPanelVisible;
+        set => SetProperty(ref _isAboutPanelVisible, value);
+    }
+
     public ICommand RefreshDevicesCommand { get; }
     public ICommand StartScrcpyCommand { get; }
     public ICommand StopScrcpyCommand { get; }
@@ -106,6 +113,8 @@ public class MainViewModel : ViewModelBase
     public ICommand BrowseScreenshotPathCommand { get; }
     public ICommand SaveConfigCommand { get; }
     public ICommand ShowWifiConnectWindowCommand { get; }
+    public ICommand ShowAboutWindowCommand { get; }
+    public ICommand ToggleAboutPanelCommand { get; }
 
     public MainViewModel()
     {
@@ -123,6 +132,8 @@ public class MainViewModel : ViewModelBase
         BrowseScreenshotPathCommand = new RelayCommand(_ => BrowseScreenshotPath());
         SaveConfigCommand = new RelayCommand(_ => SaveConfig());
         ShowWifiConnectWindowCommand = new RelayCommand(_ => ShowWifiConnectWindow());
+        ShowAboutWindowCommand = new RelayCommand(_ => ShowAboutPanel());
+        ToggleAboutPanelCommand = new RelayCommand(_ => ToggleAboutPanel());
 
         LogHelper.LogMessage += OnLogMessage;
         ScrcpyHelper.ScrcpyStarted += OnScrcpyStarted;
@@ -196,14 +207,6 @@ public class MainViewModel : ViewModelBase
     private void ToggleSettings()
     {
         IsSettingsPanelVisible = !IsSettingsPanelVisible;
-        if (IsSettingsPanelVisible)
-        {
-            LogHelper.Info("显示设置面板");
-        }
-        else
-        {
-            LogHelper.Info("隐藏设置面板");
-        }
     }
 
     private bool CanStopScrcpy()
@@ -313,8 +316,6 @@ public class MainViewModel : ViewModelBase
 
         try
         {
-            LogHelper.Info("初始化智能输入功能...");
-
             _inputMonitor = new InputMethodMonitor(
                 SelectedDevice.SerialNumber,
                 Config.KeyboardPollingInterval,
@@ -325,16 +326,14 @@ public class MainViewModel : ViewModelBase
 
             _textSender = new ScrcpyTextSender(SelectedDevice.SerialNumber);
             
-            LogHelper.Info($"等待 scrcpy 完全启动 ({Config.ScrcpyStartupDelay}ms)...");
             await System.Threading.Tasks.Task.Delay(Config.ScrcpyStartupDelay);
             
             try
             {
                 await _textSender.ConnectAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                LogHelper.Warning($"连接 scrcpy 控制端口失败，将使用 ADB 方案: {ex.Message}");
             }
 
             ShowInputFloatingWindow();
@@ -347,8 +346,6 @@ public class MainViewModel : ViewModelBase
             };
             _positionUpdateTimer.Tick += OnPositionUpdateTimerTick;
             _positionUpdateTimer.Start();
-
-            LogHelper.Info("✅ 智能输入功能初始化完成");
         }
         catch (Exception ex)
         {
@@ -477,38 +474,26 @@ public class MainViewModel : ViewModelBase
 
         try
         {
-            LogHelper.Info($"准备发送文本（不发送回车）: {text}");
-            
             if (string.IsNullOrWhiteSpace(text))
-            {
-                LogHelper.Warning("文本为空，不发送");
                 return;
-            }
             
-            // 根据配置选择传输模式
             if (Config.TextTransferMode == TextTransferMode.TextInjection)
             {
-                LogHelper.Info("使用文本注入法发送文本");
-                // 文本注入法：优先使用scrcpy socket
                 if (_textSender != null)
                 {
                     await _textSender.SendTextAsync(text);
                 }
                 else
                 {
-                    LogHelper.Warning("scrcpy连接不可用，回退到复制粘贴法");
                     AdbHelper.SendText(SelectedDevice.SerialNumber, text);
                 }
             }
             else
             {
-                LogHelper.Info("使用复制粘贴法发送文本");
-                // 复制粘贴法：使用ADB剪贴板方案
                 AdbHelper.SendText(SelectedDevice.SerialNumber, text);
             }
 
             _inputFloatingWindow?.ShowMessage("发送成功！");
-            LogHelper.Info("文本发送成功");
         }
         catch (Exception ex)
         {
@@ -523,56 +508,32 @@ public class MainViewModel : ViewModelBase
 
         try
         {
-            LogHelper.Info($"准备发送消息（强制回车）: {text}");
-            
             if (string.IsNullOrWhiteSpace(text))
-            {
-                LogHelper.Warning("文本为空，不发送");
                 return;
-            }
             
-            // 发送消息按钮总是会发送回车
-            LogHelper.Info("发送消息按钮被点击，将强制发送回车");
-            
-            // 根据配置选择传输模式
             if (Config.TextTransferMode == TextTransferMode.TextInjection)
             {
-                LogHelper.Info("使用文本注入法发送消息");
-                // 文本注入法：优先使用scrcpy socket
                 if (_textSender != null)
                 {
                     await _textSender.SendTextAsync(text);
-                    
-                    // 强制发送回车
                     await System.Threading.Tasks.Task.Delay(100);
                     await _textSender.SendEnterKeyAsync();
-                    LogHelper.Info("已强制发送回车");
                 }
                 else
                 {
-                    LogHelper.Warning("scrcpy连接不可用，回退到复制粘贴法");
                     AdbHelper.SendText(SelectedDevice.SerialNumber, text);
-                    
-                    // 强制发送回车
                     await System.Threading.Tasks.Task.Delay(100);
                     AdbHelper.SendKeyEvent(SelectedDevice.SerialNumber, 66);
-                    LogHelper.Info("已强制发送回车");
                 }
             }
             else
             {
-                LogHelper.Info("使用复制粘贴法发送消息");
-                // 复制粘贴法：使用ADB剪贴板方案
                 AdbHelper.SendText(SelectedDevice.SerialNumber, text);
-                
-                // 强制发送回车
                 await System.Threading.Tasks.Task.Delay(100);
                 AdbHelper.SendKeyEvent(SelectedDevice.SerialNumber, 66);
-                LogHelper.Info("已强制发送回车");
             }
 
             _inputFloatingWindow?.ShowMessage("发送成功！");
-            LogHelper.Info("消息发送成功");
         }
         catch (Exception ex)
         {
@@ -784,11 +745,52 @@ public class MainViewModel : ViewModelBase
                 wifiWindow.Owner = mainWindow;
                 wifiWindow.DeviceConnected += (s, e) =>
                 {
-                    // 连接成功后刷新设备列表
                     RefreshDevices();
                 };
                 wifiWindow.ShowDialog();
             }
         });
+    }
+
+    private void ShowAboutPanel()
+    {
+        IsAboutPanelVisible = true;
+    }
+
+    private void ToggleAboutPanel()
+    {
+        IsAboutPanelVisible = !IsAboutPanelVisible;
+    }
+
+    private bool _disposed;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        LogHelper.LogMessage -= OnLogMessage;
+        ScrcpyHelper.ScrcpyStarted -= OnScrcpyStarted;
+        ScrcpyHelper.ScrcpyExited -= OnScrcpyExited;
+
+        CleanupInputFloatingWindow();
+        
+        if (_floatingWindow != null)
+        {
+            _floatingWindow.ViewModel.TakeScreenshotRequested -= OnFloatingTakeScreenshot;
+            _floatingWindow.ViewModel.KeyEventRequested -= OnFloatingKeyEvent;
+            _floatingWindow.ViewModel.TextSent -= OnFloatingTextSent;
+            _floatingWindow.Close();
+            _floatingWindow = null;
+        }
+
+        if (_positionUpdateTimer != null)
+        {
+            _positionUpdateTimer.Stop();
+            _positionUpdateTimer.Tick -= OnPositionUpdateTimerTick;
+            _positionUpdateTimer = null;
+        }
+
+        CleanupGlobalHotKeys();
     }
 }
