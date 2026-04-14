@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace ScrcpyGUI.WPF.Models;
 
 public class AppConfig
@@ -18,7 +20,7 @@ public class AppConfig
     
     public bool EnableInputFloatingWindow { get; set; } = true;
     public bool EnableEnterSend { get; set; } = true;
-    public List<string> EnterSendPackageList { get; set; } = new();
+    public ObservableCollection<string> EnterSendPackageList { get; set; } = new();
     public string SendShortcutKey { get; set; } = "Ctrl+Enter";
     
     public int KeyboardPollingInterval { get; set; } = 350;

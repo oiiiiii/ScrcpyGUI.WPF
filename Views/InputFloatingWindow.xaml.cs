@@ -68,12 +68,6 @@ public partial class InputFloatingWindow : Window
         SendTextDirectly();
     }
 
-    private void AddAppButton_Click(object sender, RoutedEventArgs e)
-    {
-        ScrcpyGUI.WPF.Helpers.LogHelper.Info("[InputFloatingWindow] 添加App按钮被点击");
-        ViewModel.OnAddCurrentApp();
-    }
-
     private void SendTextDirectly()
     {
         var text = ViewModel.InputText;

@@ -6,7 +6,6 @@ public class InputFloatingViewModel : ViewModelBase
 {
     private string _inputText = string.Empty;
     private bool _enableEnterSend = true;
-    private string _currentForegroundPackage = string.Empty;
     private string _statusMessage = string.Empty;
 
     public string InputText
@@ -27,12 +26,6 @@ public class InputFloatingViewModel : ViewModelBase
         set => SetProperty(ref _enableEnterSend, value);
     }
 
-    public string CurrentForegroundPackage
-    {
-        get => _currentForegroundPackage;
-        set => SetProperty(ref _currentForegroundPackage, value);
-    }
-
     public string StatusMessage
     {
         get => _statusMessage;
@@ -40,15 +33,12 @@ public class InputFloatingViewModel : ViewModelBase
     }
 
     public ICommand SendTextCommand { get; }
-    public ICommand AddCurrentAppCommand { get; }
 
     public event EventHandler<string>? SendRequested;
-    public event EventHandler? AddCurrentAppRequested;
 
     public InputFloatingViewModel()
     {
         SendTextCommand = new RelayCommand(_ => OnSendText(), _ => !string.IsNullOrWhiteSpace(InputText));
-        AddCurrentAppCommand = new RelayCommand(_ => OnAddCurrentApp());
     }
 
     private void OnSendText()
@@ -74,12 +64,6 @@ public class InputFloatingViewModel : ViewModelBase
             ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingViewModel] 触发 SendRequested 事件");
             SendRequested?.Invoke(this, text);
         }
-    }
-
-    public void OnAddCurrentApp()
-    {
-        ScrcpyGUI.WPF.Helpers.LogHelper.Info("[InputFloatingViewModel] OnAddCurrentApp 被调用");
-        AddCurrentAppRequested?.Invoke(this, EventArgs.Empty);
     }
 
     public void ShowMessage(string message)
