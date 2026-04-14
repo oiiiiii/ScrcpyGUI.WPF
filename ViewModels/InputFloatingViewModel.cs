@@ -28,6 +28,7 @@ public class InputFloatingViewModel : ViewModelBase
     public ICommand SendTextCommand { get; }
 
     public event EventHandler<string>? SendRequested;
+    public event EventHandler<string>? SendMessageRequested;
 
     public InputFloatingViewModel()
     {
@@ -56,6 +57,16 @@ public class InputFloatingViewModel : ViewModelBase
         {
             ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingViewModel] 触发 SendRequested 事件");
             SendRequested?.Invoke(this, text);
+        }
+    }
+
+    public void SendMessageFromWindow(string text)
+    {
+        ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingViewModel] SendMessageFromWindow 被调用，文本: '{text}'");
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingViewModel] 触发 SendMessageRequested 事件");
+            SendMessageRequested?.Invoke(this, text);
         }
     }
 

@@ -60,17 +60,30 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <Button x:Name="SendButton"
                         Grid.Column="1"
-                        Content="发送"
+                        Content="发送到设备"
                         Click="SendButton_Click"
+                        Background="#333333"
+                        Foreground="White"
+                        BorderBrush="#555555"
+                        BorderThickness="1"
+                        Padding="15,8"
+                        FontSize="12"
+                        Margin="0,0,10,0" />
+
+                <Button x:Name="SendMessageButton"
+                        Grid.Column="2"
+                        Content="发送+回车"
+                        Click="SendMessageButton_Click"
                         Background="#007ACC"
                         Foreground="White"
                         BorderThickness="0"
-                        Padding="20,8"
-                        FontSize="14"
+                        Padding="15,8"
+                        FontSize="12"
                         FontWeight="SemiBold" />
             </Grid>
 

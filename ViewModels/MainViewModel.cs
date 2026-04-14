@@ -387,6 +387,8 @@ public class MainViewModel : ViewModelBase
                 _inputFloatingWindow = new InputFloatingWindow();
                 LogHelper.Info("连接 SendRequested 事件...");
                 _inputFloatingWindow.ViewModel.SendRequested += OnInputSendRequested;
+                LogHelper.Info("连接 SendMessageRequested 事件...");
+                _inputFloatingWindow.ViewModel.SendMessageRequested += OnInputSendMessageRequested;
                 _inputFloatingWindow.EnableEnterSend = Config.EnableEnterSend;
                 _inputFloatingWindow.SendShortcutKey = Config.SendShortcutKey;
                 _inputFloatingWindow.SetPackageAccessors(
@@ -531,6 +533,54 @@ public class MainViewModel : ViewModelBase
 
             _inputFloatingWindow?.ShowMessage("发送成功！");
             LogHelper.Info("文本发送成功");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"发送失败: {ex.Message}");
+            _inputFloatingWindow?.ShowMessage($"发送失败: {ex.Message}");
+        }
+    }
+
+    private async void OnInputSendMessageRequested(object? sender, string text)
+    {
+        if (SelectedDevice == null) return;
+
+        try
+        {
+            LogHelper.Info($"准备发送消息（强制回车）: {text}");
+            
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                LogHelper.Warning("文本为空，不发送");
+                return;
+            }
+            
+            // 发送消息按钮总是会发送回车
+            LogHelper.Info("发送消息按钮被点击，将强制发送回车");
+            
+            // 发送文本
+            if (_textSender != null)
+            {
+                await _textSender.SendTextAsync(text);
+                
+                // 强制发送回车
+                await System.Threading.Tasks.Task.Delay(100);
+                await _textSender.SendEnterKeyAsync();
+                LogHelper.Info("已强制发送回车");
+            }
+            else
+            {
+                LogHelper.Info("使用 ADB 方案发送文本");
+                AdbHelper.SendText(SelectedDevice.SerialNumber, text);
+                
+                // 强制发送回车
+                await System.Threading.Tasks.Task.Delay(100);
+                AdbHelper.SendKeyEvent(SelectedDevice.SerialNumber, 66);
+                LogHelper.Info("已强制发送回车");
+            }
+
+            _inputFloatingWindow?.ShowMessage("发送成功！");
+            LogHelper.Info("消息发送成功");
         }
         catch (Exception ex)
         {

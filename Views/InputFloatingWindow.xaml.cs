@@ -96,8 +96,14 @@ public partial class InputFloatingWindow : Window
 
     private void SendButton_Click(object sender, RoutedEventArgs e)
     {
-        ScrcpyGUI.WPF.Helpers.LogHelper.Info("[InputFloatingWindow] 发送按钮被点击");
+        ScrcpyGUI.WPF.Helpers.LogHelper.Info("[InputFloatingWindow] 发送到设备按钮被点击");
         SendTextDirectly();
+    }
+
+    private void SendMessageButton_Click(object sender, RoutedEventArgs e)
+    {
+        ScrcpyGUI.WPF.Helpers.LogHelper.Info("[InputFloatingWindow] 发送消息按钮被点击");
+        SendMessageDirectly();
     }
 
     private void SendTextDirectly()
@@ -109,6 +115,23 @@ public partial class InputFloatingWindow : Window
         {
             ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] 触发 SendRequested 事件");
             ViewModel.SendTextFromWindow(text);
+            ViewModel.InputText = string.Empty;
+        }
+        else
+        {
+            ScrcpyGUI.WPF.Helpers.LogHelper.Warning("[InputFloatingWindow] 文本为空，不发送");
+        }
+    }
+
+    private void SendMessageDirectly()
+    {
+        var text = ViewModel.InputText;
+        ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] 准备直接发送消息: '{text}'");
+        
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] 触发 SendMessageRequested 事件");
+            ViewModel.SendMessageFromWindow(text);
             ViewModel.InputText = string.Empty;
         }
         else
