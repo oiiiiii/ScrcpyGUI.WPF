@@ -104,9 +104,6 @@ public class MainViewModel : ViewModelBase
     public ICommand BrowseAdbCommand { get; }
     public ICommand BrowseScreenshotPathCommand { get; }
     public ICommand SaveConfigCommand { get; }
-    public ICommand AddCurrentAppToPackageListCommand { get; }
-    public ICommand ClearPackageListCommand { get; }
-    public ICommand RemovePackageCommand { get; }
 
     public MainViewModel()
     {
@@ -123,9 +120,6 @@ public class MainViewModel : ViewModelBase
         BrowseAdbCommand = new RelayCommand(_ => BrowseAdb());
         BrowseScreenshotPathCommand = new RelayCommand(_ => BrowseScreenshotPath());
         SaveConfigCommand = new RelayCommand(_ => SaveConfig());
-        AddCurrentAppToPackageListCommand = new RelayCommand(_ => AddCurrentAppToPackageList());
-        ClearPackageListCommand = new RelayCommand(_ => ClearPackageList());
-        RemovePackageCommand = new RelayCommand(param => RemovePackage(param));
 
         LogHelper.LogMessage += OnLogMessage;
         ScrcpyHelper.ScrcpyStarted += OnScrcpyStarted;
@@ -389,23 +383,11 @@ public class MainViewModel : ViewModelBase
                 _inputFloatingWindow.ViewModel.SendRequested += OnInputSendRequested;
                 LogHelper.Info("连接 SendMessageRequested 事件...");
                 _inputFloatingWindow.ViewModel.SendMessageRequested += OnInputSendMessageRequested;
-                _inputFloatingWindow.EnableEnterSend = Config.EnableEnterSend;
                 _inputFloatingWindow.SendShortcutKey = Config.SendShortcutKey;
-                _inputFloatingWindow.SetPackageAccessors(
-                    () => _inputMonitor?.CurrentForegroundPackage ?? string.Empty,
-                    () => Config.EnterSendPackageList.ToList()
-                );
-                _inputFloatingWindow.ViewModel.PropertyChanged += OnInputViewModelPropertyChanged;
                 LogHelper.Info("输入悬浮窗创建完成，事件已连接");
             }
         });
     }
-
-    private void OnInputViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        // 不再需要，因为现在不通过 ViewModel 的属性
-    }
-
     private void HideInputFloatingWindow()
     {
         System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -485,7 +467,7 @@ public class MainViewModel : ViewModelBase
 
         try
         {
-            LogHelper.Info($"准备发送文本: {text}");
+            LogHelper.Info($"准备发送文本（不发送回车）: {text}");
             
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -493,42 +475,15 @@ public class MainViewModel : ViewModelBase
                 return;
             }
             
-            // 获取当前前台应用包名
-            var currentPackage = _inputMonitor?.CurrentForegroundPackage ?? string.Empty;
-            var shouldSendEnter = false;
-            
-            // 检查是否需要发送回车
-            if (Config.EnableEnterSend && !string.IsNullOrEmpty(currentPackage) && Config.EnterSendPackageList.Contains(currentPackage))
-            {
-                shouldSendEnter = true;
-                LogHelper.Info($"当前应用 '{currentPackage}' 在回车发送列表中，将在文本发送后自动发送回车");
-            }
-            
-            // 发送文本
+            // 只发送文本，不发送回车
             if (_textSender != null)
             {
                 await _textSender.SendTextAsync(text);
-                
-                // 如果需要，发送回车
-                if (shouldSendEnter)
-                {
-                    await System.Threading.Tasks.Task.Delay(100);
-                    await _textSender.SendEnterKeyAsync();
-                    LogHelper.Info($"已向 {currentPackage} 发送回车");
-                }
             }
             else
             {
                 LogHelper.Info("使用 ADB 方案发送文本");
                 AdbHelper.SendText(SelectedDevice.SerialNumber, text);
-                
-                // 如果需要，发送回车
-                if (shouldSendEnter)
-                {
-                    await System.Threading.Tasks.Task.Delay(100);
-                    AdbHelper.SendKeyEvent(SelectedDevice.SerialNumber, 66);
-                    LogHelper.Info($"已向 {currentPackage} 发送回车");
-                }
             }
 
             _inputFloatingWindow?.ShowMessage("发送成功！");
@@ -709,50 +664,5 @@ public class MainViewModel : ViewModelBase
         InitializeTools();
         
         LogHelper.Info("配置已保存");
-    }
-
-    private void AddCurrentAppToPackageList()
-    {
-        var currentPackage = _inputMonitor?.CurrentForegroundPackage;
-        LogHelper.Info($"添加当前APP到列表，当前前台应用: {currentPackage}");
-        
-        if (string.IsNullOrEmpty(currentPackage))
-        {
-            LogHelper.Warning("无法获取当前应用！");
-            return;
-        }
-
-        if (!Config.EnterSendPackageList.Contains(currentPackage))
-        {
-            Config.EnterSendPackageList.Add(currentPackage);
-            ConfigHelper.SaveConfig(Config);
-            OnPropertyChanged(nameof(Config));
-            LogHelper.Info($"已添加应用到回车发送列表: {currentPackage}");
-        }
-        else
-        {
-            LogHelper.Info($"应用已在列表中: {currentPackage}");
-        }
-    }
-
-    private void ClearPackageList()
-    {
-        Config.EnterSendPackageList.Clear();
-        ConfigHelper.SaveConfig(Config);
-        OnPropertyChanged(nameof(Config));
-        LogHelper.Info("已清空回车发送列表");
-    }
-
-    private void RemovePackage(object? param)
-    {
-        if (param is string packageName && !string.IsNullOrEmpty(packageName))
-        {
-            if (Config.EnterSendPackageList.Remove(packageName))
-            {
-                ConfigHelper.SaveConfig(Config);
-                OnPropertyChanged(nameof(Config));
-                LogHelper.Info($"已从回车发送列表移除: {packageName}");
-            }
-        }
     }
 }

@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
 using ScrcpyGUI.WPF.Models;
@@ -21,8 +20,6 @@ public class ConfigDto
     public string AdbPath { get; set; } = string.Empty;
     public bool EnableFloatingWindow { get; set; } = true;
     public bool EnableInputFloatingWindow { get; set; } = true;
-    public bool EnableEnterSend { get; set; } = true;
-    public List<string> EnterSendPackageList { get; set; } = new();
     public string SendShortcutKey { get; set; } = "Ctrl+Enter";
     public int KeyboardPollingInterval { get; set; } = 350;
     public int KeyboardShowDebounce { get; set; } = 200;
@@ -57,7 +54,7 @@ public static class ConfigHelper
                 var dto = JsonSerializer.Deserialize<ConfigDto>(json);
                 if (dto != null)
                 {
-                    var config = new AppConfig
+                    return new AppConfig
                     {
                         MaxSize = dto.MaxSize,
                         BitRate = dto.BitRate,
@@ -73,7 +70,6 @@ public static class ConfigHelper
                         AdbPath = dto.AdbPath,
                         EnableFloatingWindow = dto.EnableFloatingWindow,
                         EnableInputFloatingWindow = dto.EnableInputFloatingWindow,
-                        EnableEnterSend = dto.EnableEnterSend,
                         SendShortcutKey = dto.SendShortcutKey,
                         KeyboardPollingInterval = dto.KeyboardPollingInterval,
                         KeyboardShowDebounce = dto.KeyboardShowDebounce,
@@ -81,13 +77,6 @@ public static class ConfigHelper
                         PositionUpdateInterval = dto.PositionUpdateInterval,
                         ScrcpyStartupDelay = dto.ScrcpyStartupDelay
                     };
-                    
-                    foreach (var package in dto.EnterSendPackageList)
-                    {
-                        config.EnterSendPackageList.Add(package);
-                    }
-                    
-                    return config;
                 }
             }
         }
@@ -118,8 +107,6 @@ public static class ConfigHelper
                 AdbPath = config.AdbPath,
                 EnableFloatingWindow = config.EnableFloatingWindow,
                 EnableInputFloatingWindow = config.EnableInputFloatingWindow,
-                EnableEnterSend = config.EnableEnterSend,
-                EnterSendPackageList = config.EnterSendPackageList.ToList(),
                 SendShortcutKey = config.SendShortcutKey,
                 KeyboardPollingInterval = config.KeyboardPollingInterval,
                 KeyboardShowDebounce = config.KeyboardShowDebounce,
