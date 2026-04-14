@@ -4,6 +4,12 @@ using ScrcpyGUI.WPF.Models;
 
 namespace ScrcpyGUI.WPF.Helpers;
 
+public enum TextTransferModeDto
+{
+    CopyPaste,
+    TextInjection
+}
+
 public class ConfigDto
 {
     public int MaxSize { get; set; } = 0;
@@ -30,6 +36,7 @@ public class ConfigDto
     public int KeyboardHideDebounce { get; set; } = 300;
     public int PositionUpdateInterval { get; set; } = 500;
     public int ScrcpyStartupDelay { get; set; } = 2000;
+    public TextTransferModeDto TextTransferMode { get; set; } = TextTransferModeDto.TextInjection;
 }
 
 public static class ConfigHelper
@@ -82,7 +89,8 @@ public static class ConfigHelper
                         KeyboardShowDebounce = dto.KeyboardShowDebounce,
                         KeyboardHideDebounce = dto.KeyboardHideDebounce,
                         PositionUpdateInterval = dto.PositionUpdateInterval,
-                        ScrcpyStartupDelay = dto.ScrcpyStartupDelay
+                        ScrcpyStartupDelay = dto.ScrcpyStartupDelay,
+                        TextTransferMode = (TextTransferMode)dto.TextTransferMode
                     };
                     
                     // 兼容旧配置：如果旧配置有SendShortcutKey但没有新配置，则使用旧值
@@ -132,7 +140,8 @@ public static class ConfigHelper
                 KeyboardShowDebounce = config.KeyboardShowDebounce,
                 KeyboardHideDebounce = config.KeyboardHideDebounce,
                 PositionUpdateInterval = config.PositionUpdateInterval,
-                ScrcpyStartupDelay = config.ScrcpyStartupDelay
+                ScrcpyStartupDelay = config.ScrcpyStartupDelay,
+                TextTransferMode = (TextTransferModeDto)config.TextTransferMode
             };
             
             var options = new JsonSerializerOptions

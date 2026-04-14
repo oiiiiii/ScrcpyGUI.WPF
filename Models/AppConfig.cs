@@ -1,5 +1,11 @@
 namespace ScrcpyGUI.WPF.Models;
 
+public enum TextTransferMode
+{
+    CopyPaste,
+    TextInjection
+}
+
 public class AppConfig
 {
     public int MaxSize { get; set; } = 0;
@@ -28,4 +34,5 @@ public class AppConfig
     public int KeyboardHideDebounce { get; set; } = 300;
     public int PositionUpdateInterval { get; set; } = 500;
     public int ScrcpyStartupDelay { get; set; } = 2000;
+    public TextTransferMode TextTransferMode { get; set; } = TextTransferMode.TextInjection;
 }

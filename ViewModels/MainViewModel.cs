@@ -477,14 +477,25 @@ public class MainViewModel : ViewModelBase
                 return;
             }
             
-            // 只发送文本，不发送回车
-            if (_textSender != null)
+            // 根据配置选择传输模式
+            if (Config.TextTransferMode == TextTransferMode.TextInjection)
             {
-                await _textSender.SendTextAsync(text);
+                LogHelper.Info("使用文本注入法发送文本");
+                // 文本注入法：优先使用scrcpy socket
+                if (_textSender != null)
+                {
+                    await _textSender.SendTextAsync(text);
+                }
+                else
+                {
+                    LogHelper.Warning("scrcpy连接不可用，回退到复制粘贴法");
+                    AdbHelper.SendText(SelectedDevice.SerialNumber, text);
+                }
             }
             else
             {
-                LogHelper.Info("使用 ADB 方案发送文本");
+                LogHelper.Info("使用复制粘贴法发送文本");
+                // 复制粘贴法：使用ADB剪贴板方案
                 AdbHelper.SendText(SelectedDevice.SerialNumber, text);
             }
 
@@ -515,19 +526,35 @@ public class MainViewModel : ViewModelBase
             // 发送消息按钮总是会发送回车
             LogHelper.Info("发送消息按钮被点击，将强制发送回车");
             
-            // 发送文本
-            if (_textSender != null)
+            // 根据配置选择传输模式
+            if (Config.TextTransferMode == TextTransferMode.TextInjection)
             {
-                await _textSender.SendTextAsync(text);
-                
-                // 强制发送回车
-                await System.Threading.Tasks.Task.Delay(100);
-                await _textSender.SendEnterKeyAsync();
-                LogHelper.Info("已强制发送回车");
+                LogHelper.Info("使用文本注入法发送消息");
+                // 文本注入法：优先使用scrcpy socket
+                if (_textSender != null)
+                {
+                    await _textSender.SendTextAsync(text);
+                    
+                    // 强制发送回车
+                    await System.Threading.Tasks.Task.Delay(100);
+                    await _textSender.SendEnterKeyAsync();
+                    LogHelper.Info("已强制发送回车");
+                }
+                else
+                {
+                    LogHelper.Warning("scrcpy连接不可用，回退到复制粘贴法");
+                    AdbHelper.SendText(SelectedDevice.SerialNumber, text);
+                    
+                    // 强制发送回车
+                    await System.Threading.Tasks.Task.Delay(100);
+                    AdbHelper.SendKeyEvent(SelectedDevice.SerialNumber, 66);
+                    LogHelper.Info("已强制发送回车");
+                }
             }
             else
             {
-                LogHelper.Info("使用 ADB 方案发送文本");
+                LogHelper.Info("使用复制粘贴法发送消息");
+                // 复制粘贴法：使用ADB剪贴板方案
                 AdbHelper.SendText(SelectedDevice.SerialNumber, text);
                 
                 // 强制发送回车
