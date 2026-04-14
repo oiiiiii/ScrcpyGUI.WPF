@@ -197,14 +197,25 @@
                                 <CheckBox Content="启用智能输入悬浮窗" 
                                           IsChecked="{Binding Config.EnableInputFloatingWindow}"
                                           Margin="0,5" />
+                                <CheckBox Content="检测到输入法自动弹出悬浮窗" 
+                                          IsChecked="{Binding Config.AutoShowOnKeyboard}"
+                                          Margin="0,5" />
                             </StackPanel>
                         </GroupBox>
 
                         <GroupBox Grid.Row="3" Header="快捷键设置" Margin="0,0,0,15">
                             <StackPanel Margin="10">
                                 <StackPanel Orientation="Horizontal" Margin="0,5">
-                                    <TextBlock Text="发送快捷键：" VerticalAlignment="Center" Width="150" />
-                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.SendShortcutKey}" Width="200" />
+                                    <TextBlock Text="发送到设备：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.SendToDeviceShortcutKey}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="发送+回车：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.SendWithEnterShortcutKey}" Width="200" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="显示悬浮窗：" VerticalAlignment="Center" Width="180" />
+                                    <local:ShortcutKeyBox ShortcutKey="{Binding Config.ShowFloatingWindowShortcutKey}" Width="200" />
                                 </StackPanel>
                             </StackPanel>
                         </GroupBox>

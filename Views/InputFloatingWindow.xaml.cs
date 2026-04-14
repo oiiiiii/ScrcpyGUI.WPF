@@ -10,12 +10,19 @@ public partial class InputFloatingWindow : Window
 {
     public InputFloatingViewModel ViewModel => (InputFloatingViewModel)DataContext;
     
-    private string _sendShortcutKey = "Ctrl+Enter";
+    private string _sendToDeviceShortcutKey = "Alt+Enter";
+    private string _sendWithEnterShortcutKey = "Ctrl+Enter";
     
-    public string SendShortcutKey
+    public string SendToDeviceShortcutKey
     {
-        get => _sendShortcutKey;
-        set => _sendShortcutKey = value;
+        get => _sendToDeviceShortcutKey;
+        set => _sendToDeviceShortcutKey = value;
+    }
+    
+    public string SendWithEnterShortcutKey
+    {
+        get => _sendWithEnterShortcutKey;
+        set => _sendWithEnterShortcutKey = value;
     }
 
     public InputFloatingWindow()
@@ -37,10 +44,18 @@ public partial class InputFloatingWindow : Window
 
     private void InputTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (ShortcutKeyHelper.IsShortcutPressed(_sendShortcutKey, e))
+        if (ShortcutKeyHelper.IsShortcutPressed(_sendToDeviceShortcutKey, e))
         {
-            ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] 快捷键 '{_sendShortcutKey}' 被按下，准备发送文本");
-            SendTextDirectly();
+            ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] 快捷键 '{_sendToDeviceShortcutKey}' 被按下，准备发送到设备");
+            ViewModel.SendTextFromWindow();
+            e.Handled = true;
+            return;
+        }
+        
+        if (ShortcutKeyHelper.IsShortcutPressed(_sendWithEnterShortcutKey, e))
+        {
+            ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] 快捷键 '{_sendWithEnterShortcutKey}' 被按下，准备发送+回车");
+            ViewModel.SendMessageFromWindow();
             e.Handled = true;
             return;
         }
@@ -52,47 +67,13 @@ public partial class InputFloatingWindow : Window
     private void SendButton_Click(object sender, RoutedEventArgs e)
     {
         ScrcpyGUI.WPF.Helpers.LogHelper.Info("[InputFloatingWindow] 发送到设备按钮被点击");
-        SendTextDirectly();
+        ViewModel.SendTextFromWindow();
     }
 
     private void SendMessageButton_Click(object sender, RoutedEventArgs e)
     {
         ScrcpyGUI.WPF.Helpers.LogHelper.Info("[InputFloatingWindow] 发送消息按钮被点击");
-        SendMessageDirectly();
-    }
-
-    private void SendTextDirectly()
-    {
-        var text = ViewModel.InputText;
-        ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] 准备直接发送文本: '{text}'");
-        
-        if (!string.IsNullOrWhiteSpace(text))
-        {
-            ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] 触发 SendRequested 事件");
-            ViewModel.SendTextFromWindow(text);
-            ViewModel.InputText = string.Empty;
-        }
-        else
-        {
-            ScrcpyGUI.WPF.Helpers.LogHelper.Warning("[InputFloatingWindow] 文本为空，不发送");
-        }
-    }
-
-    private void SendMessageDirectly()
-    {
-        var text = ViewModel.InputText;
-        ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] 准备直接发送消息: '{text}'");
-        
-        if (!string.IsNullOrWhiteSpace(text))
-        {
-            ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingWindow] 触发 SendMessageRequested 事件");
-            ViewModel.SendMessageFromWindow(text);
-            ViewModel.InputText = string.Empty;
-        }
-        else
-        {
-            ScrcpyGUI.WPF.Helpers.LogHelper.Warning("[InputFloatingWindow] 文本为空，不发送");
-        }
+        ViewModel.SendMessageFromWindow();
     }
 
     public void ShowMessage(string message)

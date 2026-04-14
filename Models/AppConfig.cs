@@ -17,7 +17,11 @@ public class AppConfig
     public bool EnableFloatingWindow { get; set; } = true;
     
     public bool EnableInputFloatingWindow { get; set; } = true;
+    public bool AutoShowOnKeyboard { get; set; } = true;
     public string SendShortcutKey { get; set; } = "Ctrl+Enter";
+    public string SendToDeviceShortcutKey { get; set; } = "Alt+Enter";
+    public string SendWithEnterShortcutKey { get; set; } = "Ctrl+Enter";
+    public string ShowFloatingWindowShortcutKey { get; set; } = "Alt+V";
     
     public int KeyboardPollingInterval { get; set; } = 350;
     public int KeyboardShowDebounce { get; set; } = 200;

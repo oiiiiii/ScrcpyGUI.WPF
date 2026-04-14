@@ -50,23 +50,25 @@ public class InputFloatingViewModel : ViewModelBase
         }
     }
 
-    public void SendTextFromWindow(string text)
+    public void SendTextFromWindow()
     {
-        ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingViewModel] SendTextFromWindow 被调用，文本: '{text}'");
-        if (!string.IsNullOrWhiteSpace(text))
+        ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingViewModel] SendTextFromWindow 被调用，文本: '{InputText}'");
+        if (!string.IsNullOrWhiteSpace(InputText))
         {
             ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingViewModel] 触发 SendRequested 事件");
-            SendRequested?.Invoke(this, text);
+            SendRequested?.Invoke(this, InputText);
+            InputText = string.Empty;
         }
     }
 
-    public void SendMessageFromWindow(string text)
+    public void SendMessageFromWindow()
     {
-        ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingViewModel] SendMessageFromWindow 被调用，文本: '{text}'");
-        if (!string.IsNullOrWhiteSpace(text))
+        ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingViewModel] SendMessageFromWindow 被调用，文本: '{InputText}'");
+        if (!string.IsNullOrWhiteSpace(InputText))
         {
             ScrcpyGUI.WPF.Helpers.LogHelper.Info($"[InputFloatingViewModel] 触发 SendMessageRequested 事件");
-            SendMessageRequested?.Invoke(this, text);
+            SendMessageRequested?.Invoke(this, InputText);
+            InputText = string.Empty;
         }
     }
 

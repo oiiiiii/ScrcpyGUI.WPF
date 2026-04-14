@@ -20,7 +20,11 @@ public class ConfigDto
     public string AdbPath { get; set; } = string.Empty;
     public bool EnableFloatingWindow { get; set; } = true;
     public bool EnableInputFloatingWindow { get; set; } = true;
+    public bool AutoShowOnKeyboard { get; set; } = true;
     public string SendShortcutKey { get; set; } = "Ctrl+Enter";
+    public string SendToDeviceShortcutKey { get; set; } = "Alt+Enter";
+    public string SendWithEnterShortcutKey { get; set; } = "Ctrl+Enter";
+    public string ShowFloatingWindowShortcutKey { get; set; } = "Alt+V";
     public int KeyboardPollingInterval { get; set; } = 350;
     public int KeyboardShowDebounce { get; set; } = 200;
     public int KeyboardHideDebounce { get; set; } = 300;
@@ -54,7 +58,7 @@ public static class ConfigHelper
                 var dto = JsonSerializer.Deserialize<ConfigDto>(json);
                 if (dto != null)
                 {
-                    return new AppConfig
+                    var config = new AppConfig
                     {
                         MaxSize = dto.MaxSize,
                         BitRate = dto.BitRate,
@@ -70,13 +74,26 @@ public static class ConfigHelper
                         AdbPath = dto.AdbPath,
                         EnableFloatingWindow = dto.EnableFloatingWindow,
                         EnableInputFloatingWindow = dto.EnableInputFloatingWindow,
-                        SendShortcutKey = dto.SendShortcutKey,
+                        AutoShowOnKeyboard = dto.AutoShowOnKeyboard,
+                        SendToDeviceShortcutKey = dto.SendToDeviceShortcutKey,
+                        SendWithEnterShortcutKey = dto.SendWithEnterShortcutKey,
+                        ShowFloatingWindowShortcutKey = dto.ShowFloatingWindowShortcutKey,
                         KeyboardPollingInterval = dto.KeyboardPollingInterval,
                         KeyboardShowDebounce = dto.KeyboardShowDebounce,
                         KeyboardHideDebounce = dto.KeyboardHideDebounce,
                         PositionUpdateInterval = dto.PositionUpdateInterval,
                         ScrcpyStartupDelay = dto.ScrcpyStartupDelay
                     };
+                    
+                    // 兼容旧配置：如果旧配置有SendShortcutKey但没有新配置，则使用旧值
+                    if (!string.IsNullOrEmpty(dto.SendShortcutKey) && 
+                        (string.IsNullOrEmpty(config.SendToDeviceShortcutKey) || string.IsNullOrEmpty(config.SendWithEnterShortcutKey)))
+                    {
+                        if (string.IsNullOrEmpty(config.SendWithEnterShortcutKey))
+                            config.SendWithEnterShortcutKey = dto.SendShortcutKey;
+                    }
+                    
+                    return config;
                 }
             }
         }
@@ -107,7 +124,10 @@ public static class ConfigHelper
                 AdbPath = config.AdbPath,
                 EnableFloatingWindow = config.EnableFloatingWindow,
                 EnableInputFloatingWindow = config.EnableInputFloatingWindow,
-                SendShortcutKey = config.SendShortcutKey,
+                AutoShowOnKeyboard = config.AutoShowOnKeyboard,
+                SendToDeviceShortcutKey = config.SendToDeviceShortcutKey,
+                SendWithEnterShortcutKey = config.SendWithEnterShortcutKey,
+                ShowFloatingWindowShortcutKey = config.ShowFloatingWindowShortcutKey,
                 KeyboardPollingInterval = config.KeyboardPollingInterval,
                 KeyboardShowDebounce = config.KeyboardShowDebounce,
                 KeyboardHideDebounce = config.KeyboardHideDebounce,

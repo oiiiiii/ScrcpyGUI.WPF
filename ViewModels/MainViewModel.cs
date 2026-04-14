@@ -21,6 +21,7 @@ public class MainViewModel : ViewModelBase
     private InputMethodMonitor? _inputMonitor;
     private ScrcpyTextSender? _textSender;
     private System.Windows.Threading.DispatcherTimer? _positionUpdateTimer;
+    private GlobalHotKeyHelper? _hotKeyHelper;
 
     public ObservableCollection<DeviceInfo> Devices
     {
@@ -383,7 +384,8 @@ public class MainViewModel : ViewModelBase
                 _inputFloatingWindow.ViewModel.SendRequested += OnInputSendRequested;
                 LogHelper.Info("连接 SendMessageRequested 事件...");
                 _inputFloatingWindow.ViewModel.SendMessageRequested += OnInputSendMessageRequested;
-                _inputFloatingWindow.SendShortcutKey = Config.SendShortcutKey;
+                _inputFloatingWindow.SendToDeviceShortcutKey = Config.SendToDeviceShortcutKey;
+                _inputFloatingWindow.SendWithEnterShortcutKey = Config.SendWithEnterShortcutKey;
                 LogHelper.Info("输入悬浮窗创建完成，事件已连接");
             }
         });
@@ -405,7 +407,7 @@ public class MainViewModel : ViewModelBase
         {
             if (_inputFloatingWindow == null) return;
 
-            if (isVisible)
+            if (isVisible && Config.AutoShowOnKeyboard)
             {
                 UpdateInputWindowPosition();
                 _inputFloatingWindow.Visibility = Visibility.Visible;
@@ -663,6 +665,76 @@ public class MainViewModel : ViewModelBase
         
         InitializeTools();
         
+        // 重新注册全局快捷键
+        RegisterAllGlobalHotKeys();
+        
         LogHelper.Info("配置已保存");
+    }
+
+    public void InitializeGlobalHotKeys(GlobalHotKeyHelper hotKeyHelper)
+    {
+        _hotKeyHelper = hotKeyHelper;
+        RegisterAllGlobalHotKeys();
+    }
+
+    public void CleanupGlobalHotKeys()
+    {
+        _hotKeyHelper?.UnregisterAllHotKeys();
+    }
+
+    private void RegisterAllGlobalHotKeys()
+    {
+        if (_hotKeyHelper == null) return;
+
+        _hotKeyHelper.UnregisterAllHotKeys();
+        
+        _hotKeyHelper.RegisterHotKey("SendToDevice", Config.SendToDeviceShortcutKey);
+        _hotKeyHelper.RegisterHotKey("SendWithEnter", Config.SendWithEnterShortcutKey);
+        _hotKeyHelper.RegisterHotKey("ShowFloatingWindow", Config.ShowFloatingWindowShortcutKey);
+    }
+
+    public void OnGlobalHotKeyPressed(string hotKeyName)
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            switch (hotKeyName)
+            {
+                case "SendToDevice":
+                    if (_inputFloatingWindow != null && _inputFloatingWindow.Visibility == Visibility.Visible)
+                    {
+                        _inputFloatingWindow.ViewModel.SendTextFromWindow();
+                    }
+                    break;
+                    
+                case "SendWithEnter":
+                    if (_inputFloatingWindow != null && _inputFloatingWindow.Visibility == Visibility.Visible)
+                    {
+                        _inputFloatingWindow.ViewModel.SendMessageFromWindow();
+                    }
+                    break;
+                    
+                case "ShowFloatingWindow":
+                    ToggleInputFloatingWindow();
+                    break;
+            }
+        });
+    }
+
+    private void ToggleInputFloatingWindow()
+    {
+        if (_inputFloatingWindow == null) return;
+
+        if (_inputFloatingWindow.Visibility == Visibility.Visible)
+        {
+            _inputFloatingWindow.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            UpdateInputWindowPosition();
+            _inputFloatingWindow.Visibility = Visibility.Visible;
+            _inputFloatingWindow.Activate();
+            _inputFloatingWindow.Focus();
+            _inputFloatingWindow.FocusInputBox();
+        }
     }
 }
