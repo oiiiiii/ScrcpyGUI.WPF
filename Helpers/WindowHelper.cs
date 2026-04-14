@@ -157,11 +157,12 @@ public static class WindowHelper
         LogHelper.Info($"   SendInput 返回值: {result} (应该是 4)");
     }
 
-    public static (IntPtr hWnd, RECT rect)? FindScrcpyWindow(int? processId = null)
+    private static bool _hasLoggedScrcpyWindow = false;
+
+    public static (IntPtr hWnd, RECT rect)? FindScrcpyWindow(int? processId = null, bool verbose = false)
     {
         IntPtr foundWindow = IntPtr.Zero;
         RECT foundRect = default;
-        var allWindows = new List<string>();
 
         EnumWindows((hWnd, lParam) =>
         {
@@ -173,8 +174,6 @@ public static class WindowHelper
                 var windowTitle = title.ToString();
                 if (!string.IsNullOrWhiteSpace(windowTitle))
                 {
-                    allWindows.Add(windowTitle);
-                    
                     // 如果提供了进程 ID，优先通过进程 ID 匹配
                     if (processId.HasValue)
                     {
@@ -188,12 +187,12 @@ public static class WindowHelper
                                 {
                                     foundWindow = hWnd;
                                     foundRect = rect;
-                                    LogHelper.Info($"✅ 通过进程 ID 找到 scrcpy 窗口: '{windowTitle}', 进程 ID: {processId}, 位置: ({rect.Left}, {rect.Top}), 大小: {rect.Width}x{rect.Height}");
+                                    if (verbose || !_hasLoggedScrcpyWindow)
+                                    {
+                                        LogHelper.Info($"✅ 找到 scrcpy 窗口: '{windowTitle}', 位置: ({rect.Left}, {rect.Top}), 大小: {rect.Width}x{rect.Height}");
+                                        _hasLoggedScrcpyWindow = true;
+                                    }
                                     return false;
-                                }
-                                else
-                                {
-                                    LogHelper.Info($"⚠️ 通过进程 ID 找到窗口 '{windowTitle}' 但太小: {rect.Width}x{rect.Height}");
                                 }
                             }
                         }
@@ -202,7 +201,8 @@ public static class WindowHelper
                     else if (windowTitle.Contains("scrcpy", StringComparison.OrdinalIgnoreCase) &&
                              !windowTitle.Contains("悬浮", StringComparison.OrdinalIgnoreCase) &&
                              !windowTitle.Contains("快捷", StringComparison.OrdinalIgnoreCase) &&
-                             !windowTitle.Contains("GUI", StringComparison.OrdinalIgnoreCase))
+                             !windowTitle.Contains("GUI", StringComparison.OrdinalIgnoreCase) &&
+                             !windowTitle.Contains("智能", StringComparison.OrdinalIgnoreCase))
                     {
                         if (GetWindowRect(hWnd, out var rect))
                         {
@@ -211,41 +211,34 @@ public static class WindowHelper
                             {
                                 foundWindow = hWnd;
                                 foundRect = rect;
-                                LogHelper.Info($"✅ 通过标题找到 scrcpy 窗口: '{windowTitle}', 位置: ({rect.Left}, {rect.Top}), 大小: {rect.Width}x{rect.Height}");
+                                if (verbose || !_hasLoggedScrcpyWindow)
+                                {
+                                    LogHelper.Info($"✅ 找到 scrcpy 窗口: '{windowTitle}', 位置: ({rect.Left}, {rect.Top}), 大小: {rect.Width}x{rect.Height}");
+                                    _hasLoggedScrcpyWindow = true;
+                                }
                                 return false;
                             }
-                            else
-                            {
-                                LogHelper.Info($"⚠️ 通过标题找到窗口 '{windowTitle}' 但太小: {rect.Width}x{rect.Height}");
-                            }
                         }
-                    }
-                    else
-                    {
-                        LogHelper.Info($"⏭️ 跳过窗口: '{windowTitle}'");
                     }
                 }
             }
             return true;
         }, IntPtr.Zero);
 
-        // 输出所有找到的窗口，方便调试
-        LogHelper.Info($"📋 枚举到 {allWindows.Count} 个可见窗口:");
-        foreach (var win in allWindows.Take(10)) // 只显示前10个避免日志太长
-        {
-            LogHelper.Info($"  - {win}");
-        }
-        if (allWindows.Count > 10)
-        {
-            LogHelper.Info($"  ... 还有 {allWindows.Count - 10} 个窗口");
-        }
-
         if (foundWindow != IntPtr.Zero)
         {
             return (foundWindow, foundRect);
         }
 
-        LogHelper.Warning("❌ 未找到 scrcpy 窗口！");
+        if (verbose)
+        {
+            LogHelper.Warning("❌ 未找到 scrcpy 窗口！");
+        }
         return null;
+    }
+
+    public static void ResetScrcpyWindowLog()
+    {
+        _hasLoggedScrcpyWindow = false;
     }
 }

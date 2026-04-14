@@ -4,13 +4,16 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:ScrcpyGUI.WPF.ViewModels"
+        xmlns:local="clr-namespace:ScrcpyGUI.WPF.Views"
         mc:Ignorable="d"
-        Title="设置" Height="540" Width="600"
+        Title="设置" Height="640" Width="600"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
     
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -96,7 +99,16 @@
             </StackPanel>
         </GroupBox>
 
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
+        <GroupBox Grid.Row="5" Header="智能输入设置" Margin="0,0,0,15">
+            <StackPanel Margin="10">
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="发送快捷键：" VerticalAlignment="Center" Width="100" />
+                    <local:ShortcutKeyBox ShortcutKey="{Binding SendShortcutKey}" Width="200" />
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="保存" 
                     Command="{Binding SaveCommand}"
                     Width="100" Margin="5" Padding="10,5" />

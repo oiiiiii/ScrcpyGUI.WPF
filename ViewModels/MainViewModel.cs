@@ -16,6 +16,10 @@ public class MainViewModel : ViewModelBase
     private bool _isScrcpyRunning;
     private bool _isToolsConfigured;
     private FloatingWindow? _floatingWindow;
+    private InputFloatingWindow? _inputFloatingWindow;
+    private InputMethodMonitor? _inputMonitor;
+    private ScrcpyTextSender? _textSender;
+    private System.Windows.Threading.DispatcherTimer? _positionUpdateTimer;
 
     public ObservableCollection<DeviceInfo> Devices
     {
@@ -109,6 +113,8 @@ public class MainViewModel : ViewModelBase
         ScrcpyHelper.ScrcpyExited += OnScrcpyExited;
 
         InitializeTools();
+        
+        ConfigHelper.SaveConfig(_config);
 
         if (IsToolsConfigured)
         {
@@ -239,13 +245,18 @@ public class MainViewModel : ViewModelBase
 
     private void OnScrcpyStarted()
     {
-        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        System.Windows.Application.Current.Dispatcher.Invoke(async () =>
         {
             IsScrcpyRunning = true;
             
             if (Config.EnableFloatingWindow)
             {
                 ShowFloatingWindow();
+            }
+
+            if (Config.EnableInputFloatingWindow && SelectedDevice != null)
+            {
+                await InitializeInputFloatingWindowAsync();
             }
         });
     }
@@ -256,7 +267,263 @@ public class MainViewModel : ViewModelBase
         {
             IsScrcpyRunning = false;
             HideFloatingWindow();
+            CleanupInputFloatingWindow();
+            WindowHelper.ResetScrcpyWindowLog();
         });
+    }
+
+    private async System.Threading.Tasks.Task InitializeInputFloatingWindowAsync()
+    {
+        if (SelectedDevice == null) return;
+
+        try
+        {
+            LogHelper.Info("初始化智能输入功能...");
+
+            _inputMonitor = new InputMethodMonitor(SelectedDevice.SerialNumber);
+            _inputMonitor.KeyboardVisibilityChanged += OnKeyboardVisibilityChanged;
+            _inputMonitor.ForegroundPackageChanged += OnForegroundPackageChanged;
+
+            _textSender = new ScrcpyTextSender(SelectedDevice.SerialNumber);
+            
+            LogHelper.Info("等待 scrcpy 完全启动 (2秒)...");
+            await System.Threading.Tasks.Task.Delay(2000);
+            
+            try
+            {
+                await _textSender.ConnectAsync();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Warning($"连接 scrcpy 控制端口失败，将使用 ADB 方案: {ex.Message}");
+            }
+
+            ShowInputFloatingWindow();
+            
+            _inputMonitor.Start();
+
+            _positionUpdateTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(500)
+            };
+            _positionUpdateTimer.Tick += OnPositionUpdateTimerTick;
+            _positionUpdateTimer.Start();
+
+            LogHelper.Info("✅ 智能输入功能初始化完成");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"智能输入功能初始化失败: {ex.Message}");
+        }
+    }
+
+    private void CleanupInputFloatingWindow()
+    {
+        if (_positionUpdateTimer != null)
+        {
+            _positionUpdateTimer.Stop();
+            _positionUpdateTimer.Tick -= OnPositionUpdateTimerTick;
+            _positionUpdateTimer = null;
+        }
+
+        if (_inputMonitor != null)
+        {
+            _inputMonitor.Stop();
+            _inputMonitor.KeyboardVisibilityChanged -= OnKeyboardVisibilityChanged;
+            _inputMonitor.ForegroundPackageChanged -= OnForegroundPackageChanged;
+            _inputMonitor.Dispose();
+            _inputMonitor = null;
+        }
+
+        _textSender?.Dispose();
+        _textSender = null;
+
+        HideInputFloatingWindow();
+    }
+
+    private void ShowInputFloatingWindow()
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (_inputFloatingWindow == null)
+            {
+                LogHelper.Info("创建输入悬浮窗实例...");
+                _inputFloatingWindow = new InputFloatingWindow();
+                LogHelper.Info("连接 SendRequested 事件...");
+                _inputFloatingWindow.ViewModel.SendRequested += OnInputSendRequested;
+                LogHelper.Info("连接 AddCurrentAppRequested 事件...");
+                _inputFloatingWindow.ViewModel.AddCurrentAppRequested += OnAddCurrentAppRequested;
+                _inputFloatingWindow.ViewModel.EnableEnterSend = Config.EnableEnterSend;
+                _inputFloatingWindow.SendShortcutKey = Config.SendShortcutKey;
+                _inputFloatingWindow.ViewModel.PropertyChanged += OnInputViewModelPropertyChanged;
+                LogHelper.Info("输入悬浮窗创建完成，事件已连接");
+            }
+        });
+    }
+
+    private void OnInputViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(InputFloatingViewModel.EnableEnterSend) && _inputFloatingWindow != null)
+        {
+            Config.EnableEnterSend = _inputFloatingWindow.ViewModel.EnableEnterSend;
+            ConfigHelper.SaveConfig(Config);
+        }
+    }
+
+    private void HideInputFloatingWindow()
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (_inputFloatingWindow != null && _inputFloatingWindow.Visibility == Visibility.Visible)
+            {
+                _inputFloatingWindow.Visibility = Visibility.Collapsed;
+            }
+        });
+    }
+
+    private void OnKeyboardVisibilityChanged(object? sender, bool isVisible)
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (_inputFloatingWindow == null) return;
+
+            if (isVisible)
+            {
+                UpdateInputWindowPosition();
+                _inputFloatingWindow.Visibility = Visibility.Visible;
+                
+                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    _inputFloatingWindow.Activate();
+                    _inputFloatingWindow.Focus();
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        _inputFloatingWindow.FocusInputBox();
+                    }), System.Windows.Threading.DispatcherPriority.Input);
+                }), System.Windows.Threading.DispatcherPriority.Loaded);
+            }
+            else
+            {
+                _inputFloatingWindow.Visibility = Visibility.Collapsed;
+            }
+        });
+    }
+
+    private void OnForegroundPackageChanged(object? sender, string packageName)
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (_inputFloatingWindow != null)
+            {
+                _inputFloatingWindow.ViewModel.CurrentForegroundPackage = packageName;
+            }
+        });
+    }
+
+    private void OnPositionUpdateTimerTick(object? sender, EventArgs e)
+    {
+        UpdateInputWindowPosition();
+    }
+
+    private void UpdateInputWindowPosition()
+    {
+        if (_inputFloatingWindow == null || _inputFloatingWindow.Visibility != Visibility.Visible) return;
+
+        try
+        {
+            var scrcpyWindow = WindowHelper.FindScrcpyWindow(ScrcpyHelper.ProcessId, verbose: false);
+            if (scrcpyWindow.HasValue)
+            {
+                var rect = scrcpyWindow.Value.rect;
+                var windowWidth = rect.Width;
+                var windowHeight = rect.Height * 0.30;
+
+                _inputFloatingWindow.Width = Math.Max(300, windowWidth);
+                _inputFloatingWindow.Height = Math.Max(120, windowHeight);
+                _inputFloatingWindow.Left = rect.Left;
+                _inputFloatingWindow.Top = rect.Bottom - _inputFloatingWindow.Height;
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    private async void OnInputSendRequested(object? sender, string text)
+    {
+        if (SelectedDevice == null) return;
+
+        try
+        {
+            LogHelper.Info($"准备发送文本: {text}");
+            
+            if (_textSender != null)
+            {
+                await _textSender.SendTextAsync(text);
+
+                if (Config.EnableEnterSend)
+                {
+                    var currentPackage = _inputMonitor?.CurrentForegroundPackage ?? string.Empty;
+                    if (!string.IsNullOrEmpty(currentPackage) && Config.EnterSendPackageList.Contains(currentPackage))
+                    {
+                        await System.Threading.Tasks.Task.Delay(100);
+                        await _textSender.SendEnterKeyAsync();
+                        LogHelper.Info($"已向 {currentPackage} 发送回车");
+                    }
+                }
+            }
+            else
+            {
+                LogHelper.Info("使用 ADB 方案发送文本");
+                AdbHelper.SendText(SelectedDevice.SerialNumber, text);
+                
+                if (Config.EnableEnterSend)
+                {
+                    var currentPackage = _inputMonitor?.CurrentForegroundPackage ?? string.Empty;
+                    if (!string.IsNullOrEmpty(currentPackage) && Config.EnterSendPackageList.Contains(currentPackage))
+                    {
+                        await System.Threading.Tasks.Task.Delay(100);
+                        AdbHelper.SendKeyEvent(SelectedDevice.SerialNumber, 66);
+                        LogHelper.Info($"已向 {currentPackage} 发送回车");
+                    }
+                }
+            }
+
+            _inputFloatingWindow?.ShowMessage("发送成功！");
+            LogHelper.Info("文本发送成功");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"发送失败: {ex.Message}");
+            _inputFloatingWindow?.ShowMessage($"发送失败: {ex.Message}");
+        }
+    }
+
+    private void OnAddCurrentAppRequested(object? sender, EventArgs e)
+    {
+        LogHelper.Info("添加当前App按钮被点击");
+        
+        var currentPackage = _inputMonitor?.CurrentForegroundPackage;
+        LogHelper.Info($"当前前台应用: {currentPackage}");
+        
+        if (string.IsNullOrEmpty(currentPackage))
+        {
+            _inputFloatingWindow?.ShowMessage("无法获取当前应用！");
+            return;
+        }
+
+        if (!Config.EnterSendPackageList.Contains(currentPackage))
+        {
+            Config.EnterSendPackageList.Add(currentPackage);
+            ConfigHelper.SaveConfig(Config);
+            _inputFloatingWindow?.ShowMessage($"已添加: {currentPackage}");
+            LogHelper.Info($"已添加应用到回车发送列表: {currentPackage}");
+        }
+        else
+        {
+            _inputFloatingWindow?.ShowMessage("该应用已在列表中");
+            LogHelper.Info($"应用已在列表中: {currentPackage}");
+        }
     }
 
     private void ShowFloatingWindow()

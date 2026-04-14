@@ -1,0 +1,169 @@
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using ScrcpyGUI.WPF.Models;
+
+namespace ScrcpyGUI.WPF.Helpers;
+
+public class InputMethodMonitor : IDisposable
+{
+    private readonly string _serialNumber;
+    private readonly System.Windows.Threading.DispatcherTimer _timer;
+    private bool _isKeyboardVisible;
+    private string _currentForegroundPackage = string.Empty;
+    private readonly Stopwatch _showDebounce = new();
+    private readonly Stopwatch _hideDebounce = new();
+    private bool _disposed;
+
+    public event EventHandler<bool>? KeyboardVisibilityChanged;
+    public event EventHandler<string>? ForegroundPackageChanged;
+
+    public bool IsKeyboardVisible => _isKeyboardVisible;
+    public string CurrentForegroundPackage => _currentForegroundPackage;
+
+    public InputMethodMonitor(string serialNumber)
+    {
+        _serialNumber = serialNumber;
+        _timer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(350)
+        };
+        _timer.Tick += OnTimerTick;
+    }
+
+    public void Start()
+    {
+        if (_disposed) throw new ObjectDisposedException(nameof(InputMethodMonitor));
+        LogHelper.Info("开始监控键盘状态和前台应用");
+        _timer.Start();
+    }
+
+    public void Stop()
+    {
+        if (_disposed) return;
+        LogHelper.Info("停止监控键盘状态和前台应用");
+        _timer.Stop();
+    }
+
+    private async void OnTimerTick(object? sender, EventArgs e)
+    {
+        try
+        {
+            var isVisible = await IsKeyboardVisibleAsync();
+            var foregroundPackage = await GetForegroundPackageAsync();
+
+            UpdateKeyboardVisibility(isVisible);
+            UpdateForegroundPackage(foregroundPackage);
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warning($"监控更新失败: {ex.Message}");
+        }
+    }
+
+    private void UpdateKeyboardVisibility(bool isVisible)
+    {
+        if (isVisible)
+        {
+            if (!_showDebounce.IsRunning)
+            {
+                _showDebounce.Restart();
+            }
+            else if (_showDebounce.ElapsedMilliseconds >= 200 && !_isKeyboardVisible)
+            {
+                _isKeyboardVisible = true;
+                _hideDebounce.Reset();
+                KeyboardVisibilityChanged?.Invoke(this, true);
+                LogHelper.Info("检测到软键盘弹出");
+            }
+        }
+        else
+        {
+            _showDebounce.Reset();
+            if (!_hideDebounce.IsRunning)
+            {
+                _hideDebounce.Restart();
+            }
+            else if (_hideDebounce.ElapsedMilliseconds >= 300 && _isKeyboardVisible)
+            {
+                _isKeyboardVisible = false;
+                _showDebounce.Reset();
+                KeyboardVisibilityChanged?.Invoke(this, false);
+                LogHelper.Info("检测到软键盘收起");
+            }
+        }
+    }
+
+    private void UpdateForegroundPackage(string packageName)
+    {
+        if (packageName != _currentForegroundPackage)
+        {
+            _currentForegroundPackage = packageName;
+            ForegroundPackageChanged?.Invoke(this, packageName);
+            LogHelper.Info($"前台应用切换: {packageName}");
+        }
+    }
+
+    public async Task<bool> IsKeyboardVisibleAsync()
+    {
+        try
+        {
+            var output = await ExecuteAdbCommandAsync("shell dumpsys input_method");
+            var isShown = output.Contains("mInputShown=true", StringComparison.OrdinalIgnoreCase);
+            return isShown;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<string> GetForegroundPackageAsync()
+    {
+        try
+        {
+            var output = await ExecuteAdbCommandAsync("shell dumpsys window displays");
+            var match = Regex.Match(output, @"mCurrentFocus.*u0\s+([\w.]+)/", RegexOptions.Compiled);
+            if (match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+            return string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    private async Task<string> ExecuteAdbCommandAsync(string arguments)
+    {
+        return await Task.Run(() =>
+        {
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = AdbHelper.AdbPath,
+                    Arguments = $"-s {_serialNumber} {arguments}",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit(500);
+            return output;
+        });
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _timer.Stop();
+        _timer.Tick -= OnTimerTick;
+    }
+}

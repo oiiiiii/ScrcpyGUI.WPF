@@ -15,4 +15,9 @@ public class AppConfig
     public string ScrcpyPath { get; set; } = string.Empty;
     public string AdbPath { get; set; } = string.Empty;
     public bool EnableFloatingWindow { get; set; } = true;
+    
+    public bool EnableInputFloatingWindow { get; set; } = true;
+    public bool EnableEnterSend { get; set; } = true;
+    public List<string> EnterSendPackageList { get; set; } = new();
+    public string SendShortcutKey { get; set; } = "Ctrl+Enter";
 }

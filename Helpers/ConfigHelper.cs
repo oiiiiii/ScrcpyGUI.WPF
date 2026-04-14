@@ -6,7 +6,19 @@ namespace ScrcpyGUI.WPF.Helpers;
 
 public static class ConfigHelper
 {
-    private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+    private static readonly string AppDataFolder = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
+        "ScrcpyGui");
+    
+    private static readonly string ConfigPath = Path.Combine(AppDataFolder, "settings.json");
+
+    static ConfigHelper()
+    {
+        if (!Directory.Exists(AppDataFolder))
+        {
+            Directory.CreateDirectory(AppDataFolder);
+        }
+    }
 
     public static AppConfig LoadConfig()
     {
@@ -35,7 +47,7 @@ public static class ConfigHelper
             };
             var json = JsonSerializer.Serialize(config, options);
             File.WriteAllText(ConfigPath, json);
-            LogHelper.Info("配置已保存");
+            LogHelper.Info($"配置已保存到: {ConfigPath}");
         }
         catch (Exception ex)
         {

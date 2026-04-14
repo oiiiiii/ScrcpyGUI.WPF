@@ -74,6 +74,16 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    public string SendShortcutKey
+    {
+        get => _config.SendShortcutKey;
+        set
+        {
+            _config.SendShortcutKey = value;
+            OnPropertyChanged(nameof(SendShortcutKey));
+        }
+    }
+
     public ICommand BrowseScrcpyCommand { get; }
     public ICommand BrowseAdbCommand { get; }
     public ICommand BrowseScreenshotPathCommand { get; }
