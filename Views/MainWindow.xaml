@@ -285,10 +285,14 @@
                         </Style.Triggers>
                     </Style>
                 </Grid.Style>
-                <ScrollViewer>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                
+                <ScrollViewer Grid.Row="0">
                     <Grid Margin="20">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -452,14 +456,17 @@
                                 </StackPanel>
                             </StackPanel>
                         </GroupBox>
-
-                        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="保存配置" 
-                                    Command="{Binding SaveConfigCommand}"
-                                    Width="100" Margin="5" Padding="10,5" />
-                        </StackPanel>
                     </Grid>
                 </ScrollViewer>
+                
+                <Border Grid.Row="1" Background="#F5F5F5" BorderThickness="1,1,1,0" BorderBrush="#E0E0E0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="20,15">
+                        <Button Content="保存配置" 
+                                Command="{Binding SaveConfigCommand}"
+                                Width="200" Height="50" FontSize="16" FontWeight="Bold"
+                                Padding="20,10" />
+                    </StackPanel>
+                </Border>
             </Grid>
 
             <Grid Name="AboutPanel">
