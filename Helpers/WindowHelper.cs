@@ -158,9 +158,30 @@ public static class WindowHelper
     }
 
     private static bool _hasLoggedScrcpyWindow = false;
+    
+    // 窗口句柄缓存
+    private static IntPtr _cachedScrcpyWindowHandle = IntPtr.Zero;
+    private static RECT _cachedScrcpyWindowRect;
+    private static DateTime _lastCacheTime = DateTime.MinValue;
+    private const int CacheValidDurationMs = 500; // 缓存有效期 500ms
 
     public static (IntPtr hWnd, RECT rect)? FindScrcpyWindow(int? processId = null, bool verbose = false)
     {
+        // 检查缓存是否有效
+        if (_cachedScrcpyWindowHandle != IntPtr.Zero && 
+            (DateTime.Now - _lastCacheTime).TotalMilliseconds < CacheValidDurationMs)
+        {
+            // 验证缓存的窗口是否仍然存在且可见
+            if (IsWindowVisible(_cachedScrcpyWindowHandle) && 
+                GetWindowRect(_cachedScrcpyWindowHandle, out var rect))
+            {
+                // 窗口仍然有效，返回缓存
+                return (_cachedScrcpyWindowHandle, rect);
+            }
+            // 窗口已关闭或不可见，清除缓存
+            _cachedScrcpyWindowHandle = IntPtr.Zero;
+        }
+
         IntPtr foundWindow = IntPtr.Zero;
         RECT foundRect = default;
 
@@ -227,6 +248,10 @@ public static class WindowHelper
 
         if (foundWindow != IntPtr.Zero)
         {
+            // 更新缓存
+            _cachedScrcpyWindowHandle = foundWindow;
+            _cachedScrcpyWindowRect = foundRect;
+            _lastCacheTime = DateTime.Now;
             return (foundWindow, foundRect);
         }
 
@@ -240,5 +265,11 @@ public static class WindowHelper
     public static void ResetScrcpyWindowLog()
     {
         _hasLoggedScrcpyWindow = false;
+    }
+
+    public static void ClearWindowCache()
+    {
+        _cachedScrcpyWindowHandle = IntPtr.Zero;
+        _lastCacheTime = DateTime.MinValue;
     }
 }

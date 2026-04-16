@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -13,6 +14,7 @@ public class MainViewModel : ViewModelBase, IDisposable
     private ObservableCollection<DeviceInfo> _devices = new();
     private DeviceInfo? _selectedDevice;
     private AppConfig _config;
+    private readonly StringBuilder _logBuilder = new StringBuilder();
     private string _logText = string.Empty;
     private bool _isScrcpyRunning;
     private bool _isToolsConfigured;
@@ -309,9 +311,28 @@ public class MainViewModel : ViewModelBase, IDisposable
         LogText = string.Empty;
     }
 
+    private readonly object _logLock = new object();
+    private const int MaxLogLines = 1000;
+
     private void OnLogMessage(string message)
     {
-        LogText += message + Environment.NewLine;
+        lock (_logLock)
+        {
+            _logBuilder.AppendLine(message);
+            
+            // 限制日志行数，防止内存溢出
+            var lines = _logBuilder.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            if (lines.Length > MaxLogLines)
+            {
+                _logBuilder.Clear();
+                foreach (var line in lines.Skip(lines.Length - MaxLogLines))
+                {
+                    _logBuilder.AppendLine(line);
+                }
+            }
+            
+            LogText = _logBuilder.ToString();
+        }
     }
 
     private void OnScrcpyStarted()
@@ -473,6 +494,9 @@ public class MainViewModel : ViewModelBase, IDisposable
         // 不再需要，包名管理已移至设置面板
     }
 
+    private WindowHelper.RECT? _lastWindowRect;
+    private const int PositionChangeThreshold = 5; // 位置变化阈值（像素）
+
     private void OnPositionUpdateTimerTick(object? sender, EventArgs e)
     {
         UpdateInputWindowPosition();
@@ -488,6 +512,24 @@ public class MainViewModel : ViewModelBase, IDisposable
             if (scrcpyWindow.HasValue)
             {
                 var rect = scrcpyWindow.Value.rect;
+                
+                // 防抖：只有当位置或大小变化超过阈值时才更新
+                if (_lastWindowRect.HasValue)
+                {
+                    var lastRect = _lastWindowRect.Value;
+                    var positionChanged = Math.Abs(rect.Left - lastRect.Left) > PositionChangeThreshold ||
+                                         Math.Abs(rect.Top - lastRect.Top) > PositionChangeThreshold ||
+                                         Math.Abs(rect.Width - lastRect.Width) > PositionChangeThreshold ||
+                                         Math.Abs(rect.Height - lastRect.Height) > PositionChangeThreshold;
+                    
+                    if (!positionChanged)
+                    {
+                        return; // 位置变化不大，跳过更新
+                    }
+                }
+                
+                _lastWindowRect = rect;
+                
                 var windowWidth = rect.Width;
                 var windowHeight = rect.Height * 0.30;
 
@@ -495,6 +537,10 @@ public class MainViewModel : ViewModelBase, IDisposable
                 _inputFloatingWindow.Height = Math.Max(120, windowHeight);
                 _inputFloatingWindow.Left = rect.Left;
                 _inputFloatingWindow.Top = rect.Bottom - _inputFloatingWindow.Height;
+            }
+            else
+            {
+                _lastWindowRect = null;
             }
         }
         catch

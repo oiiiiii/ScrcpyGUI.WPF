@@ -75,6 +75,7 @@ public partial class App : System.Windows.Application
     private void CleanupAllProcesses()
     {
         CleanupScrcpyProcesses();
+        AdbCommandPool.Instance.Dispose();
         AdbHelper.CleanupAdbProcesses();
     }
 }
