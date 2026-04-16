@@ -116,6 +116,7 @@ public class MainViewModel : ViewModelBase, IDisposable
     public ICommand ShowAboutWindowCommand { get; }
     public ICommand ToggleAboutPanelCommand { get; }
     public ICommand GoBackToMainCommand { get; }
+    public ICommand ToggleFloatingWindowCommand { get; }
 
     public MainViewModel()
     {
@@ -127,6 +128,7 @@ public class MainViewModel : ViewModelBase, IDisposable
         TakeScreenshotCommand = new RelayCommand(_ => TakeScreenshot(), _ => SelectedDevice != null && IsToolsConfigured);
         SendKeyCommand = new RelayCommand(param => SendKey(param), _ => SelectedDevice != null && IsToolsConfigured);
         ClearLogCommand = new RelayCommand(_ => ClearLog());
+        ToggleFloatingWindowCommand = new RelayCommand(_ => ToggleFloatingWindow());
         ToggleSettingsCommand = new RelayCommand(_ => ToggleSettings());
         BrowseScrcpyCommand = new RelayCommand(_ => BrowseScrcpy());
         BrowseAdbCommand = new RelayCommand(_ => BrowseAdb());
@@ -283,11 +285,6 @@ public class MainViewModel : ViewModelBase, IDisposable
         System.Windows.Application.Current.Dispatcher.Invoke(async () =>
         {
             IsScrcpyRunning = true;
-            
-            if (Config.EnableFloatingWindow)
-            {
-                ShowFloatingWindow();
-            }
 
             if (Config.EnableInputFloatingWindow && SelectedDevice != null)
             {
@@ -554,7 +551,7 @@ public class MainViewModel : ViewModelBase, IDisposable
                 _floatingWindow = new FloatingWindow();
                 _floatingWindow.ViewModel.TakeScreenshotRequested += OnFloatingTakeScreenshot;
                 _floatingWindow.ViewModel.KeyEventRequested += OnFloatingKeyEvent;
-                _floatingWindow.ViewModel.TextSent += OnFloatingTextSent;
+                _floatingWindow.ViewModel.ExpandNotificationRequested += OnFloatingExpandNotification;
             }
             
             if (!_floatingWindow.IsVisible)
@@ -575,6 +572,28 @@ public class MainViewModel : ViewModelBase, IDisposable
         });
     }
 
+    private void ToggleFloatingWindow()
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (_floatingWindow == null)
+            {
+                ShowFloatingWindow();
+            }
+            else
+            {
+                if (_floatingWindow.IsVisible)
+                {
+                    HideFloatingWindow();
+                }
+                else
+                {
+                    ShowFloatingWindow();
+                }
+            }
+        });
+    }
+
     private void OnFloatingTakeScreenshot(object? sender, EventArgs e)
     {
         TakeScreenshot();
@@ -585,23 +604,11 @@ public class MainViewModel : ViewModelBase, IDisposable
         SendKey(keyCode);
     }
 
-    private void OnFloatingTextSent(object? sender, string text)
+    private void OnFloatingExpandNotification(object? sender, EventArgs e)
     {
-        SendText(text);
-    }
-
-    private void SendText(string text)
-    {
-        if (SelectedDevice == null)
+        if (SelectedDevice != null)
         {
-            LogHelper.Warning("请先选择设备");
-            return;
-        }
-
-        var success = AdbHelper.SendText(SelectedDevice.SerialNumber, text);
-        if (success && _floatingWindow != null)
-        {
-            _floatingWindow.ShowNotification("文本发送成功！");
+            AdbHelper.ExpandNotification(SelectedDevice.SerialNumber);
         }
     }
 
@@ -789,7 +796,7 @@ public class MainViewModel : ViewModelBase, IDisposable
         {
             _floatingWindow.ViewModel.TakeScreenshotRequested -= OnFloatingTakeScreenshot;
             _floatingWindow.ViewModel.KeyEventRequested -= OnFloatingKeyEvent;
-            _floatingWindow.ViewModel.TextSent -= OnFloatingTextSent;
+            _floatingWindow.ViewModel.ExpandNotificationRequested -= OnFloatingExpandNotification;
             _floatingWindow.Close();
             _floatingWindow = null;
         }

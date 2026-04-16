@@ -6,12 +6,14 @@
         xmlns:viewModels="clr-namespace:ScrcpyGUI.WPF.ViewModels"
         mc:Ignorable="d"
         Title="快捷工具" 
-        Height="160" 
-        Width="380"
+        Height="450" 
+        Width="160"
+        MinHeight="400"
+        MinWidth="120"
         WindowStyle="SingleBorderWindow"
         Topmost="True"
         ShowInTaskbar="False"
-        ResizeMode="NoResize">
+        ResizeMode="CanResize">
     
     <Window.DataContext>
         <viewModels:FloatingViewModel />
@@ -19,54 +21,63 @@
 
     <Grid Background="White" Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" 
-                    Orientation="Horizontal" 
-                    HorizontalAlignment="Center">
+                    Orientation="Vertical" 
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
             <Button Content="📷 截图" 
                     Command="{Binding TakeScreenshotCommand}"
-                    Margin="5"
-                    Padding="10,5" />
+                    Margin="3"
+                    Padding="5,3"
+                    Width="100" />
             <Button Content="🔘 电源" 
                     Command="{Binding PowerKeyCommand}"
-                    Margin="5"
-                    Padding="10,5" />
+                    Margin="3"
+                    Padding="5,3"
+                    Width="100" />
             <Button Content="🏠 首页" 
                     Command="{Binding HomeKeyCommand}"
-                    Margin="5"
-                    Padding="10,5" />
+                    Margin="3"
+                    Padding="5,3"
+                    Width="100" />
             <Button Content="↩️ 返回" 
                     Command="{Binding BackKeyCommand}"
-                    Margin="5"
-                    Padding="10,5" />
+                    Margin="3"
+                    Padding="5,3"
+                    Width="100" />
+            <Button Content="🔊 音量+" 
+                    Command="{Binding VolumeUpCommand}"
+                    Margin="3"
+                    Padding="5,3"
+                    Width="100" />
+            <Button Content="🔇 音量-" 
+                    Command="{Binding VolumeDownCommand}"
+                    Margin="3"
+                    Padding="5,3"
+                    Width="100" />
+            <Button Content="📋 菜单" 
+                    Command="{Binding MenuKeyCommand}"
+                    Margin="3"
+                    Padding="5,3"
+                    Width="100" />
+            <Button Content="📱 多任务" 
+                    Command="{Binding RecentAppsCommand}"
+                    Margin="3"
+                    Padding="5,3"
+                    Width="100" />
+            <Button Content="📢 通知栏" 
+                    Command="{Binding ExpandNotificationCommand}"
+                    Margin="3"
+                    Padding="5,3"
+                    Width="100" />
         </StackPanel>
 
-        <Grid Grid.Row="1" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            
-            <TextBox x:Name="InputTextBox"
-                     Grid.Column="0"
-                     Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
-                     Padding="8,5"
-                     KeyDown="InputTextBox_KeyDown" />
-            
-            <Button x:Name="SendButton"
-                    Grid.Column="1"
-                    Content="发送"
-                    Command="{Binding SendTextCommand}"
-                    Margin="5,0,0,0"
-                    Padding="15,5" />
-        </Grid>
-
         <TextBlock x:Name="NotificationText"
-                  Grid.Row="2"
+                  Grid.Row="1"
                   Text=""
                   Foreground="#007ACC"
                   FontWeight="Bold"

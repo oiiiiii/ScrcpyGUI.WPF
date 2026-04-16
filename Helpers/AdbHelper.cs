@@ -180,6 +180,28 @@ public static class AdbHelper
         }
     }
 
+    public static void ExpandNotification(string serial)
+    {
+        try
+        {
+            // 使用 adb 命令展开通知栏
+            ExecuteAdbCommand($"-s {serial} shell cmd statusbar expand-notifications");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"展开通知栏失败: {ex.Message}");
+            // 如果上面的命令失败，尝试使用备用方案
+            try
+            {
+                ExecuteAdbCommand($"-s {serial} shell service call statusbar 1");
+            }
+            catch
+            {
+                // 忽略备用方案的错误
+            }
+        }
+    }
+
     public static bool SendText(string serial, string text)
     {
         if (string.IsNullOrWhiteSpace(text))

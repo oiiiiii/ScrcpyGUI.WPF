@@ -159,26 +159,11 @@
                                     IsEnabled="{Binding StartScrcpyCommand.CanExecute, RelativeSource={RelativeSource Self}}" />
                             <Button Content="⏹️ 停止投屏" 
                                     Command="{Binding StopScrcpyCommand}"
-                                    Height="50" FontSize="16" Margin="5,10,0,10" Padding="20,0"
+                                    Height="50" FontSize="16" Margin="5,10,5,10" Padding="20,0"
                                     IsEnabled="{Binding StopScrcpyCommand.CanExecute, RelativeSource={RelativeSource Self}}" />
-                        </StackPanel>
-                        
-                        <Separator Margin="0,20" />
-                        
-                        <TextBlock Text="快捷操作" FontWeight="Bold" Margin="0,10" />
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
-                                <Button Content="📷 截图" Command="{Binding TakeScreenshotCommand}" Margin="5" Padding="10,5" />
-                                <Button Content="🔘 电源" Command="{Binding SendKeyCommand}" CommandParameter="26" Margin="5" Padding="10,5" />
-                                <Button Content="🏠 首页" Command="{Binding SendKeyCommand}" CommandParameter="3" Margin="5" Padding="10,5" />
-                                <Button Content="↩️ 返回" Command="{Binding SendKeyCommand}" CommandParameter="4" Margin="5" Padding="10,5" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
-                                <Button Content="🔊 音量+" Command="{Binding SendKeyCommand}" CommandParameter="24" Margin="5" Padding="10,5" />
-                                <Button Content="🔇 音量-" Command="{Binding SendKeyCommand}" CommandParameter="25" Margin="5" Padding="10,5" />
-                                <Button Content="📋 菜单" Command="{Binding SendKeyCommand}" CommandParameter="82" Margin="5" Padding="10,5" />
-                                <Button Content="📱 多任务" Command="{Binding SendKeyCommand}" CommandParameter="187" Margin="5" Padding="10,5" />
-                            </StackPanel>
+                            <Button Content="� 快捷工具" 
+                                    Command="{Binding ToggleFloatingWindowCommand}"
+                                    Height="50" FontSize="16" Margin="5,10,0,10" Padding="20,0" />
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>
@@ -291,9 +276,6 @@
 
                         <GroupBox Grid.Row="2" Header="悬浮窗设置" Margin="0,0,0,15">
                             <StackPanel Margin="10">
-                                <CheckBox Content="启用悬浮窗" 
-                                          IsChecked="{Binding Config.EnableFloatingWindow}"
-                                          Margin="0,5" />
                                 <CheckBox Content="启用智能输入悬浮窗" 
                                           IsChecked="{Binding Config.EnableInputFloatingWindow}"
                                           Margin="0,5" />

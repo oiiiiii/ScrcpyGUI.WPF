@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Input;
 using ScrcpyGUI.WPF.ViewModels;
 
 namespace ScrcpyGUI.WPF.Views;
@@ -29,15 +28,6 @@ public partial class FloatingWindow : System.Windows.Window
         
         Left = screenWidth - Width - 20;
         Top = screenHeight - Height - 60;
-    }
-
-    private void InputTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-    {
-        if (e.Key == System.Windows.Input.Key.Enter)
-        {
-            ViewModel.SendTextCommand.Execute(null);
-            e.Handled = true;
-        }
     }
 
     public void ShowNotification(string message)

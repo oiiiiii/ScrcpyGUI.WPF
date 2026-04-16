@@ -7,7 +7,6 @@ public class FloatingViewModel : ViewModelBase
     private string _notificationText = string.Empty;
     private bool _isNotificationVisible;
     private double _opacity = 0.9;
-    private string _inputText = string.Empty;
 
     public string NotificationText
     {
@@ -27,27 +26,19 @@ public class FloatingViewModel : ViewModelBase
         set => SetProperty(ref _opacity, value);
     }
 
-    public string InputText
-    {
-        get => _inputText;
-        set
-        {
-            if (SetProperty(ref _inputText, value))
-            {
-                ((RelayCommand)SendTextCommand).RaiseCanExecuteChanged();
-            }
-        }
-    }
-
     public ICommand TakeScreenshotCommand { get; }
     public ICommand PowerKeyCommand { get; }
     public ICommand HomeKeyCommand { get; }
     public ICommand BackKeyCommand { get; }
-    public ICommand SendTextCommand { get; }
+    public ICommand VolumeUpCommand { get; }
+    public ICommand VolumeDownCommand { get; }
+    public ICommand MenuKeyCommand { get; }
+    public ICommand RecentAppsCommand { get; }
+    public ICommand ExpandNotificationCommand { get; }
 
     public event EventHandler? TakeScreenshotRequested;
     public event EventHandler<int>? KeyEventRequested;
-    public event EventHandler<string>? TextSent;
+    public event EventHandler? ExpandNotificationRequested;
 
     public FloatingViewModel()
     {
@@ -55,7 +46,11 @@ public class FloatingViewModel : ViewModelBase
         PowerKeyCommand = new RelayCommand(_ => OnKeyEvent(26));
         HomeKeyCommand = new RelayCommand(_ => OnKeyEvent(3));
         BackKeyCommand = new RelayCommand(_ => OnKeyEvent(4));
-        SendTextCommand = new RelayCommand(_ => OnSendText(), _ => !string.IsNullOrWhiteSpace(InputText));
+        VolumeUpCommand = new RelayCommand(_ => OnKeyEvent(24));
+        VolumeDownCommand = new RelayCommand(_ => OnKeyEvent(25));
+        MenuKeyCommand = new RelayCommand(_ => OnKeyEvent(82));
+        RecentAppsCommand = new RelayCommand(_ => OnKeyEvent(187));
+        ExpandNotificationCommand = new RelayCommand(_ => OnExpandNotification());
     }
 
     public void ShowNotification(string message)
@@ -85,12 +80,8 @@ public class FloatingViewModel : ViewModelBase
         KeyEventRequested?.Invoke(this, keyCode);
     }
 
-    private void OnSendText()
+    private void OnExpandNotification()
     {
-        if (!string.IsNullOrWhiteSpace(InputText))
-        {
-            TextSent?.Invoke(this, InputText);
-            InputText = string.Empty;
-        }
+        ExpandNotificationRequested?.Invoke(this, EventArgs.Empty);
     }
 }
