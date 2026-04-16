@@ -30,7 +30,7 @@ public partial class MainWindow : Window
         _hotKeyHelper?.Dispose();
         if (DataContext is MainViewModel viewModel)
         {
-            viewModel.CleanupGlobalHotKeys();
+            viewModel.Dispose();
         }
     }
 }

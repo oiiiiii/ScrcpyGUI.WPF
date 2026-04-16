@@ -94,7 +94,7 @@
 
         <GroupBox Grid.Row="4" Header="其他设置" Margin="0,0,0,15">
             <StackPanel Margin="10">
-                <CheckBox Content="启用悬浮窗" 
+                <CheckBox Content="启用智能输入悬浮窗" 
                           IsChecked="{Binding EnableFloatingWindow}"
                           Margin="0,5" />
             </StackPanel>

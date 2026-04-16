@@ -907,6 +907,13 @@ public class MainViewModel : ViewModelBase, IDisposable
         ScrcpyHelper.ScrcpyStarted -= OnScrcpyStarted;
         ScrcpyHelper.ScrcpyExited -= OnScrcpyExited;
 
+        // 停止 scrcpy 进程
+        if (ScrcpyHelper.IsRunning)
+        {
+            LogHelper.Info("Dispose: 停止 scrcpy 进程");
+            ScrcpyHelper.StopScrcpy();
+        }
+
         CleanupInputFloatingWindow();
         
         if (_floatingWindow != null)

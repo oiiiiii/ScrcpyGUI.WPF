@@ -9,6 +9,7 @@ public static class ScrcpyHelper
 {
     private static string? _scrcpyPath;
     private static Process? _currentProcess;
+    private static int? _currentProcessId;
 
     static ScrcpyHelper()
     {
@@ -84,6 +85,7 @@ public static class ScrcpyHelper
             _currentProcess.Exited += OnScrcpyExited;
             
             _currentProcess.Start();
+            _currentProcessId = _currentProcess.Id;
             _currentProcess.BeginOutputReadLine();
             _currentProcess.BeginErrorReadLine();
 
@@ -102,23 +104,173 @@ public static class ScrcpyHelper
 
     public static void StopScrcpy()
     {
+        StopScrcpyInternal(false);
+    }
+
+    public static void ForceStopScrcpy()
+    {
+        StopScrcpyInternal(true);
+    }
+
+    private static void StopScrcpyInternal(bool force)
+    {
         try
         {
             if (_currentProcess != null && !_currentProcess.HasExited)
             {
                 LogHelper.Info("正在停止投屏...");
-                _currentProcess.Kill();
-                // 不使用 WaitForExit，避免阻塞 UI 线程
+                
+                try
+                {
+                    // 首先尝试优雅关闭（发送 Ctrl+C）
+                    if (!force)
+                    {
+                        _currentProcess.CancelErrorRead();
+                        _currentProcess.CancelOutputRead();
+                        
+                        try
+                        {
+                            _currentProcess.CloseMainWindow();
+                            // 等待进程优雅退出
+                            if (_currentProcess.WaitForExit(3000))
+                            {
+                                LogHelper.Info("投屏已优雅停止");
+                                return;
+                            }
+                        }
+                        catch
+                        {
+                            // CloseMainWindow 可能失败（非 GUI 进程），继续使用 Kill
+                        }
+                    }
+                    
+                    // 强制终止
+                    LogHelper.Info("强制终止投屏进程...");
+                    _currentProcess.Kill();
+                    
+                    // 等待进程终止
+                    if (_currentProcess.WaitForExit(5000))
+                    {
+                        LogHelper.Info("投屏已强制停止");
+                    }
+                    else
+                    {
+                        LogHelper.Warning("强制终止超时");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.Error($"停止投屏失败: {ex.Message}");
+                }
             }
         }
         catch (Exception ex)
         {
-            LogHelper.Error($"停止投屏失败: {ex.Message}");
+            LogHelper.Error($"停止投屏异常: {ex.Message}");
         }
         finally
         {
-            // 不在 finally 中立即清理，让 Exited 事件处理
-            // 这样可以避免资源竞争
+            CleanupProcess();
+        }
+    }
+
+    private static void CleanupProcess()
+    {
+        if (_currentProcess != null)
+        {
+            try
+            {
+                _currentProcess.CancelErrorRead();
+                _currentProcess.CancelOutputRead();
+                _currentProcess.Dispose();
+            }
+            catch
+            {
+                // 忽略清理异常
+            }
+            _currentProcess = null;
+            _currentProcessId = null;
+        }
+    }
+
+    public static void CleanupAllScrcpyProcesses()
+    {
+        LogHelper.Info("开始清理所有 scrcpy 相关进程...");
+        
+        // 停止当前进程
+        if (IsRunning)
+        {
+            ForceStopScrcpy();
+        }
+        
+        // 查找并杀死所有残留的 scrcpy 进程
+        KillAllScrcpyProcesses();
+        
+        LogHelper.Info("scrcpy 进程清理完成");
+    }
+
+    public static void KillAllScrcpyProcesses()
+    {
+        try
+        {
+            string scrcpyExeName = Path.GetFileName(_scrcpyPath) ?? "scrcpy.exe";
+            
+            // 获取所有 scrcpy 进程
+            var processes = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(scrcpyExeName));
+            
+            if (processes.Length > 0)
+            {
+                LogHelper.Info($"发现 {processes.Length} 个 scrcpy 进程需要清理");
+                
+                foreach (var process in processes)
+                {
+                    try
+                    {
+                        // 检查是否是我们启动的进程
+                        bool isOurProcess = _currentProcessId.HasValue && process.Id == _currentProcessId.Value;
+                        
+                        LogHelper.Info($"终止进程: {process.ProcessName} (PID: {process.Id}){(isOurProcess ? " - 当前进程" : " - 残留进程")}");
+                        
+                        process.Kill();
+                        if (process.WaitForExit(2000))
+                        {
+                            LogHelper.Info($"进程 {process.Id} 已终止");
+                        }
+                        else
+                        {
+                            LogHelper.Warning($"进程 {process.Id} 终止超时");
+                        }
+                        
+                        process.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        LogHelper.Error($"终止进程失败: {ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                LogHelper.Info("未发现残留的 scrcpy 进程");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"清理 scrcpy 进程失败: {ex.Message}");
+        }
+    }
+
+    public static bool HasResidualProcesses()
+    {
+        try
+        {
+            string scrcpyExeName = Path.GetFileName(_scrcpyPath) ?? "scrcpy.exe";
+            var processes = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(scrcpyExeName));
+            return processes.Length > 0;
+        }
+        catch
+        {
+            return false;
         }
     }
 

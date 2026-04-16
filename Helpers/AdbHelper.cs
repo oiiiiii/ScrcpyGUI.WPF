@@ -38,6 +38,56 @@ public static class AdbHelper
         return File.Exists(_adbPath);
     }
 
+    public static void CleanupAdbProcesses()
+    {
+        LogHelper.Info("开始清理 ADB 进程...");
+        
+        try
+        {
+            // 获取所有 adb 进程
+            var processes = Process.GetProcessesByName("adb");
+            
+            if (processes.Length > 0)
+            {
+                LogHelper.Info($"发现 {processes.Length} 个 ADB 进程需要清理");
+                
+                foreach (var process in processes)
+                {
+                    try
+                    {
+                        LogHelper.Info($"终止 ADB 进程: {process.ProcessName} (PID: {process.Id})");
+                        
+                        process.Kill();
+                        if (process.WaitForExit(3000))
+                        {
+                            LogHelper.Info($"ADB 进程 {process.Id} 已终止");
+                        }
+                        else
+                        {
+                            LogHelper.Warning($"ADB 进程 {process.Id} 终止超时");
+                        }
+                        
+                        process.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        LogHelper.Error($"终止 ADB 进程失败: {ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                LogHelper.Info("未发现 ADB 进程");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"清理 ADB 进程失败: {ex.Message}");
+        }
+        
+        LogHelper.Info("ADB 进程清理完成");
+    }
+
     public static List<DeviceInfo> GetConnectedDevices()
     {
         var devices = new List<DeviceInfo>();
