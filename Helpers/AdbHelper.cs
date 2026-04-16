@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using ScrcpyGUI.WPF.Models;
 
@@ -16,6 +17,8 @@ public static class AdbHelper
     }
 
     public static string AdbPath => _adbPath ?? "adb";
+
+    public static bool IsConfigured => !string.IsNullOrWhiteSpace(_adbPath) && _adbPath != "adb" && File.Exists(_adbPath);
 
     public static void UpdatePaths(string adbPath)
     {
@@ -293,5 +296,79 @@ public static class AdbHelper
         }
 
         return output;
+    }
+
+    public static async Task<(string output, string error, int exitCode)> ExecuteAdbCommandAsync(string arguments, int timeoutMs = 30000)
+    {
+        var tcs = new TaskCompletionSource<(string output, string error, int exitCode)>();
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = _adbPath,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8,
+                StandardErrorEncoding = System.Text.Encoding.UTF8
+            },
+            EnableRaisingEvents = true
+        };
+
+        var outputBuilder = new StringBuilder();
+        var errorBuilder = new StringBuilder();
+
+        process.OutputDataReceived += (sender, e) =>
+        {
+            if (e.Data != null)
+            {
+                outputBuilder.AppendLine(e.Data);
+            }
+        };
+
+        process.ErrorDataReceived += (sender, e) =>
+        {
+            if (e.Data != null)
+            {
+                errorBuilder.AppendLine(e.Data);
+            }
+        };
+
+        process.Exited += (sender, e) =>
+        {
+            tcs.TrySetResult((outputBuilder.ToString(), errorBuilder.ToString(), process.ExitCode));
+            process.Dispose();
+        };
+
+        try
+        {
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            var timeoutTask = Task.Delay(timeoutMs);
+            var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+
+            if (completedTask == timeoutTask)
+            {
+                try
+                {
+                    process.Kill();
+                }
+                catch
+                {
+                    // 忽略 kill 异常
+                }
+                return (string.Empty, "命令执行超时", -1);
+            }
+
+            return await tcs.Task;
+        }
+        catch (Exception ex)
+        {
+            return (string.Empty, $"执行命令失败: {ex.Message}", -1);
+        }
     }
 }

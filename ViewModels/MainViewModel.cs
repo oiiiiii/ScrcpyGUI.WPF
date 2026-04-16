@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using ScrcpyGUI.WPF.Helpers;
@@ -117,6 +118,37 @@ public class MainViewModel : ViewModelBase, IDisposable
     public ICommand ToggleAboutPanelCommand { get; }
     public ICommand GoBackToMainCommand { get; }
     public ICommand ToggleFloatingWindowCommand { get; }
+    public ICommand ExecuteAdbCommand { get; }
+    public ICommand ClearAdbCommand { get; }
+
+    private string _adbCommandText = string.Empty;
+    private string _adbCommandOutput = string.Empty;
+    private bool _isAdbCommandExecuting;
+    private string _adbCommandStatus = string.Empty;
+
+    public string AdbCommandText
+    {
+        get => _adbCommandText;
+        set => SetProperty(ref _adbCommandText, value);
+    }
+
+    public string AdbCommandOutput
+    {
+        get => _adbCommandOutput;
+        set => SetProperty(ref _adbCommandOutput, value);
+    }
+
+    public bool IsAdbCommandExecuting
+    {
+        get => _isAdbCommandExecuting;
+        set => SetProperty(ref _isAdbCommandExecuting, value);
+    }
+
+    public string AdbCommandStatus
+    {
+        get => _adbCommandStatus;
+        set => SetProperty(ref _adbCommandStatus, value);
+    }
 
     public MainViewModel()
     {
@@ -137,6 +169,8 @@ public class MainViewModel : ViewModelBase, IDisposable
         ShowWifiConnectWindowCommand = new RelayCommand(_ => ShowWifiConnectWindow());
         ShowAboutWindowCommand = new RelayCommand(_ => ShowAboutPanel());
         ToggleAboutPanelCommand = new RelayCommand(_ => ToggleAboutPanel());
+        ExecuteAdbCommand = new RelayCommand(async _ => await ExecuteAdbCommandAsync(), _ => !IsAdbCommandExecuting && SelectedDevice != null && IsToolsConfigured);
+        ClearAdbCommand = new RelayCommand(_ => ClearAdbOutput());
         GoBackToMainCommand = new RelayCommand(_ => GoBackToMain());
 
         LogHelper.LogMessage += OnLogMessage;
@@ -777,6 +811,89 @@ public class MainViewModel : ViewModelBase, IDisposable
     {
         IsSettingsPanelVisible = false;
         IsAboutPanelVisible = false;
+    }
+
+    private async System.Threading.Tasks.Task ExecuteAdbCommandAsync()
+    {
+        if (string.IsNullOrWhiteSpace(AdbCommandText))
+        {
+            AdbCommandStatus = "请输入 ADB 命令";
+            return;
+        }
+
+        if (SelectedDevice == null)
+        {
+            AdbCommandStatus = "请先选择设备";
+            return;
+        }
+
+        IsAdbCommandExecuting = true;
+        AdbCommandStatus = "执行中...";
+        AdbCommandOutput = string.Empty;
+
+        try
+        {
+            var command = AdbCommandText.Trim();
+            
+            // 如果命令以 "adb " 开头，去掉前缀
+            if (command.StartsWith("adb ", StringComparison.OrdinalIgnoreCase))
+            {
+                command = command.Substring(4).Trim();
+            }
+            
+            // 如果命令不是以 -s 开头，自动添加设备序列号
+            if (!command.StartsWith("-s", StringComparison.OrdinalIgnoreCase))
+            {
+                command = $"-s {SelectedDevice.SerialNumber} {command}";
+            }
+
+            var (output, error, exitCode) = await AdbHelper.ExecuteAdbCommandAsync(command);
+
+            var resultBuilder = new StringBuilder();
+            
+            if (!string.IsNullOrEmpty(output))
+            {
+                resultBuilder.AppendLine("[标准输出]");
+                resultBuilder.AppendLine(output);
+            }
+
+            if (!string.IsNullOrEmpty(error))
+            {
+                resultBuilder.AppendLine("[错误输出]");
+                resultBuilder.AppendLine(error);
+            }
+
+            AdbCommandOutput = resultBuilder.ToString();
+
+            if (exitCode == 0)
+            {
+                AdbCommandStatus = "执行成功";
+            }
+            else if (exitCode == -1)
+            {
+                AdbCommandStatus = "执行超时";
+            }
+            else
+            {
+                AdbCommandStatus = $"执行失败 (退出代码: {exitCode})";
+            }
+        }
+        catch (Exception ex)
+        {
+            AdbCommandStatus = $"执行异常: {ex.Message}";
+            AdbCommandOutput = $"异常详情:\n{ex}";
+        }
+        finally
+        {
+            IsAdbCommandExecuting = false;
+            ((RelayCommand)ExecuteAdbCommand).RaiseCanExecuteChanged();
+        }
+    }
+
+    private void ClearAdbOutput()
+    {
+        AdbCommandOutput = string.Empty;
+        AdbCommandStatus = string.Empty;
     }
 
     private bool _disposed;

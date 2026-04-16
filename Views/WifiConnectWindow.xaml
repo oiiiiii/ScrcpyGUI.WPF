@@ -5,49 +5,93 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:ScrcpyGUI.WPF.ViewModels"
         mc:Ignorable="d"
-        Title="无线连接" Height="300" Width="420"
+        Title="无线连接" Height="480" Width="480"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
     
-    <Grid Margin="20">
+    <Window.Resources>
+        <Style x:Key="StatusTextStyle" TargetType="TextBlock">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ConnectionStatus}" Value="Connecting">
+                    <Setter Property="Foreground" Value="#0078D4" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ConnectionStatus}" Value="Success">
+                    <Setter Property="Foreground" Value="#107C10" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ConnectionStatus}" Value="Failed">
+                    <Setter Property="Foreground" Value="#D13438" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    
+    <Grid Margin="25">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="无线连接设备" FontSize="16" FontWeight="Bold" Margin="0,0,0,20" />
+        <TextBlock Grid.Row="0" Text="无线连接设备" FontSize="18" FontWeight="Bold" Margin="0,0,0,25" />
 
-        <StackPanel Grid.Row="1" Margin="0,0,0,10">
-            <TextBlock Text="设备IP地址：" Margin="0,0,0,5" />
+        <StackPanel Grid.Row="1" Margin="0,0,0,15">
+            <TextBlock Text="设备IP地址：" Margin="0,0,0,6" FontWeight="Medium" />
             <TextBox x:Name="IpAddressTextBox" 
                      Text="{Binding IpAddress, UpdateSourceTrigger=PropertyChanged}"
-                     Padding="8,5" />
+                     Padding="10,7"
+                     FontSize="14" />
         </StackPanel>
 
-        <StackPanel Grid.Row="2" Margin="0,0,0,10">
-            <TextBlock Text="端口号（默认5555）：" Margin="0,0,0,5" />
+        <StackPanel Grid.Row="2" Margin="0,0,0,15">
+            <TextBlock Text="端口号（默认5555）：" Margin="0,0,0,6" FontWeight="Medium" />
             <TextBox x:Name="PortTextBox" 
                      Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
-                     Padding="8,5" />
+                     Padding="10,7"
+                     FontSize="14" />
         </StackPanel>
 
-        <TextBlock Grid.Row="3" 
-                   x:Name="ErrorMessageTextBlock"
-                   Text="{Binding ErrorMessage}"
-                   Foreground="Red"
-                   TextWrapping="Wrap"
-                   Margin="0,0,0,10" />
+        <StackPanel Grid.Row="3" Margin="0,0,0,15" Orientation="Horizontal">
+            <TextBlock Text="状态：" FontWeight="Medium" />
+            <TextBlock Text="{Binding StatusMessage}" 
+                       Style="{StaticResource StatusTextStyle}" 
+                       Margin="5,0,0,0" />
+        </StackPanel>
 
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+        <ScrollViewer Grid.Row="5" 
+                      VerticalScrollBarVisibility="Auto" 
+                      MaxHeight="180"
+                      Margin="0,0,0,15">
+            <Border Background="#FFF9F9F9" 
+                    BorderBrush="#FFE0E0E0" 
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12">
+                <TextBlock x:Name="ErrorMessageTextBlock"
+                           Text="{Binding ErrorMessage}"
+                           Foreground="#D13438"
+                           TextWrapping="Wrap"
+                           FontSize="13"
+                           LineHeight="22" />
+            </Border>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="连接" 
                     Command="{Binding ConnectCommand}"
-                    Width="100" Margin="5" Padding="10,5" />
+                    IsEnabled="{Binding ConnectCommand.CanExecute, RelativeSource={RelativeSource Self}}"
+                    Width="110" Height="35" Margin="5" Padding="10,5"
+                    FontSize="14" />
             <Button Content="取消" 
                     Command="{Binding CancelCommand}"
-                    Width="100" Margin="5" Padding="10,5" />
+                    Width="110" Height="35" Margin="5" Padding="10,5"
+                    FontSize="14" />
         </StackPanel>
     </Grid>
 </Window>
