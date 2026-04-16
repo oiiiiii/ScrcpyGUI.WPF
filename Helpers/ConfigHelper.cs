@@ -65,18 +65,16 @@ public class ConfigDto
 
 public static class ConfigHelper
 {
-    private static readonly string AppDataFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
-        "ScrcpyGui");
+    private static readonly string AppDirectory = AppDomain.CurrentDomain.BaseDirectory;
+    private static readonly string ConfigPath = Path.Combine(AppDirectory, "settings.json");
+    private static readonly string ScrcpyDirectory = Path.Combine(AppDirectory, "scrcpy");
     
-    private static readonly string ConfigPath = Path.Combine(AppDataFolder, "settings.json");
+    public static string DefaultAdbPath => Path.Combine(ScrcpyDirectory, "adb.exe");
+    public static string DefaultScrcpyPath => Path.Combine(ScrcpyDirectory, "scrcpy.exe");
 
     static ConfigHelper()
     {
-        if (!Directory.Exists(AppDataFolder))
-        {
-            Directory.CreateDirectory(AppDataFolder);
-        }
+        // 不需要创建 AppData 文件夹了
     }
 
     public static AppConfig LoadConfig()
@@ -147,6 +145,15 @@ public static class ConfigHelper
                             config.SendWithEnterShortcutKey = dto.SendShortcutKey;
                     }
                     
+                    // 检查并设置默认路径
+                    if (string.IsNullOrEmpty(config.AdbPath))
+                    {
+                        config.AdbPath = DefaultAdbPath;
+                    }
+                    if (string.IsNullOrEmpty(config.ScrcpyPath))
+                    {
+                        config.ScrcpyPath = DefaultScrcpyPath;
+                    }
                     return config;
                 }
             }
@@ -155,7 +162,14 @@ public static class ConfigHelper
         {
             LogHelper.Error($"加载配置失败: {ex.Message}");
         }
-        return new AppConfig();
+        
+        // 返回新配置时，设置默认路径
+        var defaultConfig = new AppConfig
+        {
+            AdbPath = DefaultAdbPath,
+            ScrcpyPath = DefaultScrcpyPath
+        };
+        return defaultConfig;
     }
 
     public static void SaveConfig(AppConfig config)
