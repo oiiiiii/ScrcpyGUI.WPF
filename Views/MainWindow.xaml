@@ -27,17 +27,82 @@
         </Grid.RowDefinitions>
 
         <ToolBar Grid.Row="0" Height="40">
-            <Button Content="🏠 主界面" Command="{Binding ToggleSettingsCommand}" Margin="5,0" Padding="10,5" 
-                    Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource BoolToVisibility}}" />
-            <Button Content="🔄 刷新设备" Command="{Binding RefreshDevicesCommand}" Margin="5,0" Padding="10,5" 
-                    Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
-            <Button Content="📡 无线连接" Command="{Binding ShowWifiConnectWindowCommand}" Margin="5,0" Padding="10,5" 
-                    Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
+            <Button Content="🏠 主界面" Command="{Binding GoBackToMainCommand}" Margin="5,0" Padding="10,5">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSettingsPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsAboutPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Content="🔄 刷新设备" Command="{Binding RefreshDevicesCommand}" Margin="5,0" Padding="10,5">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSettingsPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsAboutPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Content="📡 无线连接" Command="{Binding ShowWifiConnectWindowCommand}" Margin="5,0" Padding="10,5">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSettingsPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsAboutPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
             <Separator />
-            <Button Content="⚙️ 设置" Command="{Binding ToggleSettingsCommand}" Margin="5,0" Padding="10,5" 
-                    Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
-            <Button Content="ℹ️ 关于" Command="{Binding ShowAboutWindowCommand}" Margin="5,0" Padding="10,5" 
-                    Visibility="{Binding IsSettingsPanelVisible, Converter={StaticResource InverseBoolToVisibility}}" />
+            <Button Content="⚙️ 设置" Command="{Binding ToggleSettingsCommand}" Margin="5,0" Padding="10,5">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSettingsPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsAboutPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Content="ℹ️ 关于" Command="{Binding ShowAboutWindowCommand}" Margin="5,0" Padding="10,5">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSettingsPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsAboutPanelVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
         </ToolBar>
 
         <Grid Grid.Row="1">
@@ -382,6 +447,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0" Text="关于" FontSize="16" FontWeight="Bold" Margin="0,0,0,20" />
@@ -426,6 +492,11 @@
                             </StackPanel>
                         </GroupBox>
 
+                        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="🏠 返回主界面" 
+                                    Command="{Binding GoBackToMainCommand}"
+                                    Width="120" Margin="5" Padding="10,5" />
+                        </StackPanel>
 
                     </Grid>
                 </ScrollViewer>

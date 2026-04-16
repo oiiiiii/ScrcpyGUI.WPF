@@ -177,9 +177,9 @@ public static class ScrcpyHelper
             sb.Append(" --turn-screen-off");
         }
         
-        if (!config.ShowTouch)
+        if (config.ShowTouch)
         {
-            sb.Append(" --no-show-touches");
+            sb.Append(" --show-touches");
         }
         
         if (config.RotateMirror)

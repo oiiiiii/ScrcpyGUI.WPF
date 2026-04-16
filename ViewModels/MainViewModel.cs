@@ -115,6 +115,7 @@ public class MainViewModel : ViewModelBase, IDisposable
     public ICommand ShowWifiConnectWindowCommand { get; }
     public ICommand ShowAboutWindowCommand { get; }
     public ICommand ToggleAboutPanelCommand { get; }
+    public ICommand GoBackToMainCommand { get; }
 
     public MainViewModel()
     {
@@ -134,6 +135,7 @@ public class MainViewModel : ViewModelBase, IDisposable
         ShowWifiConnectWindowCommand = new RelayCommand(_ => ShowWifiConnectWindow());
         ShowAboutWindowCommand = new RelayCommand(_ => ShowAboutPanel());
         ToggleAboutPanelCommand = new RelayCommand(_ => ToggleAboutPanel());
+        GoBackToMainCommand = new RelayCommand(_ => GoBackToMain());
 
         LogHelper.LogMessage += OnLogMessage;
         ScrcpyHelper.ScrcpyStarted += OnScrcpyStarted;
@@ -206,6 +208,7 @@ public class MainViewModel : ViewModelBase, IDisposable
 
     private void ToggleSettings()
     {
+        IsAboutPanelVisible = false;
         IsSettingsPanelVisible = !IsSettingsPanelVisible;
     }
 
@@ -754,12 +757,19 @@ public class MainViewModel : ViewModelBase, IDisposable
 
     private void ShowAboutPanel()
     {
+        IsSettingsPanelVisible = false;
         IsAboutPanelVisible = true;
     }
 
     private void ToggleAboutPanel()
     {
         IsAboutPanelVisible = !IsAboutPanelVisible;
+    }
+
+    private void GoBackToMain()
+    {
+        IsSettingsPanelVisible = false;
+        IsAboutPanelVisible = false;
     }
 
     private bool _disposed;
